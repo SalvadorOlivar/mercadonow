@@ -208,6 +208,25 @@ El objetivo es que el proyecto no sea simplemente un CRUD.
 
 Quiero entender por qué se toman las decisiones arquitectónicas y cuáles son sus trade-offs.
 
+### Quality gate local
+
+El mismo quality gate usado por CI se ejecuta desde la raíz:
+
+```bash
+pnpm verify
+```
+
+El comando ejecuta typecheck, lint, pruebas unitarias, pruebas de integración,
+E2E y build. Las suites que usan PostgreSQL requieren el servicio local:
+
+```bash
+docker compose up -d postgres
+```
+
+Las pruebas crean y reinicializan exclusivamente una base cuyo nombre termina
+en `_test`; por defecto usan `mercadonow_test`. El setup aplica todas las
+migraciones vigentes mediante el mismo runner utilizado en desarrollo.
+
 ---
 
 # Fase 3 — Testing

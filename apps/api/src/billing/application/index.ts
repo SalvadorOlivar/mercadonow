@@ -1,13 +1,14 @@
 /**
  * Application layer — billing.
  *
- * Use cases: one class per operation (CreateOrder, CreatePayment, ...).
- * Depends on domain ports only. Orchestrates transactions and business flow.
+ * Use cases and outbound orchestration ports (transactions, gateways, IDs).
+ * Depends on domain entities and repository ports, never on adapters.
  */
 export * from "./ports/order-id-generator";
 export * from "./ports/invoice-id-generator";
 export * from "./ports/payment-gateway";
 export * from "./ports/payment-id-generator";
+export * from "./ports/transaction-manager";
 export * from "./errors/billing-application.errors";
 export * from "./use-cases/create-invoice.use-case";
 export * from "./use-cases/create-order.use-case";

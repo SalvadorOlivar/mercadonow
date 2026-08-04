@@ -109,6 +109,9 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
     devDependencies:
+      '@eslint/eslintrc':
+        specifier: 3.3.6
+        version: 3.3.6(supports-color@8.1.1)
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1

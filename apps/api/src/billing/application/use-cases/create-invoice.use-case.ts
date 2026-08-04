@@ -2,7 +2,6 @@ import { Invoice } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
 import type { PaymentRepository } from "../../domain/repositories/payment.repository";
-import type { TransactionManager } from "../../domain/repositories/transaction-manager";
 import {
   InvoiceAlreadyExistsError,
   OrderNotFoundError,
@@ -11,6 +10,7 @@ import {
   PaymentOrderMismatchError,
 } from "../errors/billing-application.errors";
 import type { InvoiceIdGenerator } from "../ports/invoice-id-generator";
+import type { TransactionManager } from "../ports/transaction-manager";
 import type {
   CreateInvoiceInput,
   CreateInvoiceOutput,

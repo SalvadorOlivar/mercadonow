@@ -113,9 +113,11 @@ scale.
 ## Consequences
 
 - `apps/api/src/billing` uses four layers: `domain`, `application`,
-  `infrastructure`, `presentation`. The dependency direction is
-  `presentation -> application -> domain <- infrastructure`. The domain layer
-  imports nothing from outer layers and nothing framework-specific.
+  `infrastructure`, `presentation`. Presentation depends on application,
+  application depends on domain, and infrastructure depends inward on the
+  application/domain ports it implements. The composition root wires all four.
+  The domain layer imports nothing from outer layers and nothing
+  framework-specific. See ADR-003 for the enforceable dependency matrix.
 - `@mercadonow/shared` is pure TypeScript (no NestJS, no React) so both apps
   can import it without dragging framework dependencies.
 - Money handling crosses boundaries as integer cents; only the `Money` VO and

@@ -39,6 +39,7 @@ pnpm dev:web                  # Next.js dev (port 3000)
 pnpm -r typecheck             # typecheck every workspace
 pnpm -r lint
 pnpm -r test                  # jest per workspace
+pnpm verify                   # full local/CI gate, including integration + E2E
 pnpm --filter @mercadonow/api test                # one workspace only
 pnpm --filter @mercadonow/api test -- <pattern>   # single test file/pattern
 ```
@@ -64,15 +65,20 @@ re-trigger an install check on every run.
 `apps/api/src/billing` has four layers. **Dependency direction is one-way:**
 
 ```
-presentation -> application -> domain <- infrastructure
+presentation -> application -> domain
+infrastructure -> application / domain
 ```
+
+`BillingModule` is the composition root and may import every layer. Infrastructure
+depends inward on the outbound ports it implements; it never imports presentation.
 
 - `domain/` — entities, value objects, domain errors, repository PORTS
   (interfaces). **Must not import** NestJS, `pg`, or anything from outer layers.
-- `application/` — one use-case class per operation. Depends on domain ports
-  only. Owns the transaction boundary.
-- `infrastructure/` — adapters implementing domain ports (PG repositories,
-  gateways).
+- `application/` — one use-case class per operation plus orchestration ports
+  such as transactions, gateways and ID generation. Depends on domain. Owns
+  the transaction boundary.
+- `infrastructure/` — adapters implementing domain/application ports (PG
+  repositories, transactions, gateways and ID generators).
 - `presentation/` — thin NestJS controllers, DTOs, the exception filter.
   No business logic.
 

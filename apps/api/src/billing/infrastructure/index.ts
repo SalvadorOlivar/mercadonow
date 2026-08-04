@@ -1,8 +1,9 @@
 /**
  * Infrastructure layer — billing.
  *
- * Adapters that implement domain ports: PostgreSQL repositories,
- * payment gateways, message publishers. Depends on domain (implements ports).
+ * Adapters that implement outbound domain/application ports: PostgreSQL
+ * repositories, transaction management, payment gateways, ID generators.
+ * Infrastructure depends inward on the ports it implements.
  */
 export * from "./ids/uuid-v7-order-id-generator";
 export * from "./ids/uuid-v7-invoice-id-generator";

@@ -13,7 +13,11 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test"
+    "test:architecture": "node scripts/verify-architecture-rules.mjs",
+    "test": "pnpm -r test",
+    "test:integration": "pnpm --filter @mercadonow/api test:integration",
+    "test:e2e": "pnpm --filter @mercadonow/api test:e2e",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test:architecture && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm build"
   },
   "devDependencies": {
     "eslint": "9.39.2",

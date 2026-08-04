@@ -1,10 +1,10 @@
 import { Payment } from "../../domain/entities/payment.entity";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
 import type { PaymentRepository } from "../../domain/repositories/payment.repository";
-import type { TransactionManager } from "../../domain/repositories/transaction-manager";
 import { OrderNotFoundError } from "../errors/billing-application.errors";
 import type { PaymentGateway } from "../ports/payment-gateway";
 import type { PaymentIdGenerator } from "../ports/payment-id-generator";
+import type { TransactionManager } from "../ports/transaction-manager";
 import type {
   CreatePaymentInput,
   CreatePaymentOutput,

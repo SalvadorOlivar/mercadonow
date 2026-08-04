@@ -3,7 +3,7 @@ import { asId } from "@mercadonow/shared";
 import { DomainValidationError } from "../../../domain/errors/domain-validation.error";
 import type { Order } from "../../../domain/entities/order.entity";
 import type { OrderRepository } from "../../../domain/repositories/order.repository";
-import type { TransactionManager } from "../../../domain/repositories/transaction-manager";
+import type { TransactionManager } from "../../ports/transaction-manager";
 import type { OrderIdGenerator } from "../../ports/order-id-generator";
 import { CreateOrder } from "../create-order.use-case";
 import type { CreateOrderInput } from "../interfaces/create-order.interface";

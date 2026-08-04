@@ -4,5 +4,5 @@
     "outDir": "./dist/test",
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*", "scripts/**/*", "test/**/*"]
 }

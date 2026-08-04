@@ -16,5 +16,4 @@ export * from "./errors/invalid-state-transition.error";
 export * from "./repositories/invoice.repository";
 export * from "./repositories/order.repository";
 export * from "./repositories/payment.repository";
-export * from "./repositories/transaction-manager";
 export * from "./value-objects/money";

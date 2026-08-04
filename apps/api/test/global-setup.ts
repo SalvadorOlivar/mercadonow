@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 import { Client } from "pg";
+
+import { runMigrations } from "../scripts/migration-runner";
 
 const DEFAULT_TEST_DATABASE_URL =
   "postgres://mercadonow:mercadonow@localhost:5432/mercadonow_test";
@@ -36,12 +35,9 @@ export default async function globalSetup(): Promise<void> {
   try {
     await testClient.query("DROP SCHEMA public CASCADE");
     await testClient.query("CREATE SCHEMA public");
-    const migration = await readFile(
-      join(__dirname, "../database/migrations/001_create_billing_tables.sql"),
-      "utf8",
-    );
-    await testClient.query(migration);
   } finally {
     await testClient.end();
   }
+
+  await runMigrations({ connectionString });
 }

@@ -1,8 +1,8 @@
 import { Order } from "../../domain/entities/order.entity";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
-import type { TransactionManager } from "../../domain/repositories/transaction-manager";
 import { Money } from "../../domain/value-objects/money";
 import type { OrderIdGenerator } from "../ports/order-id-generator";
+import type { TransactionManager } from "../ports/transaction-manager";
 import type {
   CreateOrderInput,
   CreateOrderOutput,
