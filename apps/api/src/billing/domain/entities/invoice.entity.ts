@@ -1,0 +1,64 @@
+import type {
+  InvoiceId,
+  InvoiceStatus,
+  OrderId,
+  PaymentId,
+} from "@mercadonow/shared";
+
+import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
+import { Money } from "../value-objects/money";
+
+export interface InvoiceProps {
+  readonly id: InvoiceId;
+  readonly orderId: OrderId;
+  readonly paymentId: PaymentId;
+  readonly total: Money;
+  readonly status?: InvoiceStatus;
+}
+
+export class Invoice {
+  readonly id: InvoiceId;
+  readonly orderId: OrderId;
+  readonly paymentId: PaymentId;
+  readonly total: Money;
+  private currentStatus: InvoiceStatus;
+
+  constructor(props: InvoiceProps) {
+    this.id = props.id;
+    this.orderId = props.orderId;
+    this.paymentId = props.paymentId;
+    this.total = props.total;
+    this.currentStatus = props.status ?? "DRAFT";
+  }
+
+  get status(): InvoiceStatus {
+    return this.currentStatus;
+  }
+
+  issue(): void {
+    this.transition("DRAFT", "ISSUED");
+  }
+
+  markPaid(): void {
+    this.transition("ISSUED", "PAID");
+  }
+
+  cancel(): void {
+    if (this.currentStatus !== "DRAFT" && this.currentStatus !== "ISSUED") {
+      throw new InvalidStateTransitionError(
+        "Invoice",
+        this.currentStatus,
+        "CANCELLED",
+      );
+    }
+    this.currentStatus = "CANCELLED";
+  }
+
+  private transition(expected: InvoiceStatus, next: InvoiceStatus): void {
+    if (this.currentStatus !== expected) {
+      throw new InvalidStateTransitionError("Invoice", this.currentStatus, next);
+    }
+    this.currentStatus = next;
+  }
+}
+
