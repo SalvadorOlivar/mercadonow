@@ -3,11 +3,6 @@ packages:
   - "packages/*"
 
 allowBuilds:
-  '@nestjs/core': set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
-
-onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "sharp"
-  - "unrs-resolver"
+  "@nestjs/core@11.0.0": true
+  "sharp@0.34.5": true
+  "unrs-resolver@1.12.2": true

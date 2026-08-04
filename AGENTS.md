@@ -53,12 +53,10 @@ docker compose down -v                 # stop + wipe data volume
 ```
 
 pnpm quirks (pnpm 11): build-script approval is required for
-`@nestjs/core`, `sharp`, `unrs-resolver`. They are listed under
-`onlyBuiltDependencies` in `pnpm-workspace.yaml`. If `pnpm install` or any
-`pnpm --filter`/`pnpm -r` command exits with `ERR_PNPM_IGNORED_BUILDS`, run
-`pnpm approve-builds` (or `pnpm config set dangerously-allow-all-builds true`
-on a fresh machine). `verify-deps-before-run` is disabled so commands don't
-re-trigger an install check on every run.
+`@nestjs/core`, `sharp`, and `unrs-resolver`. Their exact installed versions
+are explicitly approved under `allowBuilds` in `pnpm-workspace.yaml`; do not
+use `dangerouslyAllowAllBuilds`. When one of these dependencies is upgraded,
+review its install script and update the matching version deliberately.
 
 ## Architecture rules (enforced by review, not tooling yet)
 
