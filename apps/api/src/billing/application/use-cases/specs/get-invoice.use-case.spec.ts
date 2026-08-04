@@ -1,10 +1,10 @@
 import { asId } from "@mercadonow/shared";
 
-import { Invoice } from "../../domain/entities/invoice.entity";
-import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
-import { Money } from "../../domain/value-objects/money";
-import { InvoiceNotFoundError } from "../errors/billing-application.errors";
-import { GetInvoice } from "./get-invoice.use-case";
+import { Invoice } from "../../../domain/entities/invoice.entity";
+import type { InvoiceRepository } from "../../../domain/repositories/invoice.repository";
+import { Money } from "../../../domain/value-objects/money";
+import { InvoiceNotFoundError } from "../../errors/billing-application.errors";
+import { GetInvoice } from "../get-invoice.use-case";
 
 const invoiceId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "InvoiceId");
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "OrderId");

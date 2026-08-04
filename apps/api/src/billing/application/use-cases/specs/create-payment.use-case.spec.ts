@@ -1,15 +1,15 @@
 import { asId } from "@mercadonow/shared";
 
-import { Order } from "../../domain/entities/order.entity";
-import { Payment } from "../../domain/entities/payment.entity";
-import type { OrderRepository } from "../../domain/repositories/order.repository";
-import type { PaymentRepository } from "../../domain/repositories/payment.repository";
-import type { TransactionManager } from "../../domain/repositories/transaction-manager";
-import { Money } from "../../domain/value-objects/money";
-import { OrderNotFoundError } from "../errors/billing-application.errors";
-import type { PaymentGateway } from "../ports/payment-gateway";
-import type { PaymentIdGenerator } from "../ports/payment-id-generator";
-import { CreatePayment } from "./create-payment.use-case";
+import { Order } from "../../../domain/entities/order.entity";
+import { Payment } from "../../../domain/entities/payment.entity";
+import type { OrderRepository } from "../../../domain/repositories/order.repository";
+import type { PaymentRepository } from "../../../domain/repositories/payment.repository";
+import type { TransactionManager } from "../../../domain/repositories/transaction-manager";
+import { Money } from "../../../domain/value-objects/money";
+import { OrderNotFoundError } from "../../errors/billing-application.errors";
+import type { PaymentGateway } from "../../ports/payment-gateway";
+import type { PaymentIdGenerator } from "../../ports/payment-id-generator";
+import { CreatePayment } from "../create-payment.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "PaymentId");

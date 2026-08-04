@@ -5,3 +5,6 @@
  * Controllers stay thin: HTTP <-> DTO <-> use case. No business logic.
  */
 export {};
+export * from "./billing-exception.filter";
+export * from "./billing.controller";
+export * from "./dtos/billing-request.dto";

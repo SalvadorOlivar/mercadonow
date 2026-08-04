@@ -1,11 +1,3 @@
-import type {
-  InvoiceId,
-  InvoiceStatus,
-  MoneyDTO,
-  OrderId,
-  PaymentId,
-} from "@mercadonow/shared";
-
 import { Invoice } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
@@ -19,19 +11,10 @@ import {
   PaymentOrderMismatchError,
 } from "../errors/billing-application.errors";
 import type { InvoiceIdGenerator } from "../ports/invoice-id-generator";
-
-export interface CreateInvoiceInput {
-  readonly orderId: OrderId;
-  readonly paymentId: PaymentId;
-}
-
-export interface CreateInvoiceOutput {
-  readonly invoiceId: InvoiceId;
-  readonly orderId: OrderId;
-  readonly paymentId: PaymentId;
-  readonly status: InvoiceStatus;
-  readonly total: MoneyDTO;
-}
+import type {
+  CreateInvoiceInput,
+  CreateInvoiceOutput,
+} from "./interfaces/create-invoice.interface";
 
 export class CreateInvoice {
   constructor(

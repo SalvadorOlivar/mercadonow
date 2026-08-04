@@ -13,3 +13,7 @@ export * from "./use-cases/create-invoice.use-case";
 export * from "./use-cases/create-order.use-case";
 export * from "./use-cases/create-payment.use-case";
 export * from "./use-cases/get-invoice.use-case";
+export * from "./use-cases/interfaces/create-invoice.interface";
+export * from "./use-cases/interfaces/create-order.interface";
+export * from "./use-cases/interfaces/create-payment.interface";
+export * from "./use-cases/interfaces/get-invoice.interface";

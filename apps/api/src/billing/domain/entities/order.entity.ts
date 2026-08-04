@@ -8,21 +8,7 @@ import type {
 import { DomainValidationError } from "../errors/domain-validation.error";
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-
-export interface OrderItem {
-  readonly productId: string;
-  readonly quantity: number;
-  readonly unitPrice: Money;
-}
-
-export interface OrderProps {
-  readonly id: OrderId;
-  readonly customerId: CustomerId;
-  readonly merchantId: MerchantId;
-  readonly items: readonly OrderItem[];
-  readonly deliveryAddress: string;
-  readonly status?: OrderStatus;
-}
+import type { OrderItem, OrderProps } from "./interfaces/order.interface";
 
 export class Order {
   readonly id: OrderId;
@@ -96,4 +82,3 @@ export class Order {
     this.currentStatus = next;
   }
 }
-

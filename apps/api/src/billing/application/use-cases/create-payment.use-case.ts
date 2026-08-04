@@ -1,10 +1,3 @@
-import type {
-  MoneyDTO,
-  OrderId,
-  PaymentId,
-  PaymentStatus,
-} from "@mercadonow/shared";
-
 import { Payment } from "../../domain/entities/payment.entity";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
 import type { PaymentRepository } from "../../domain/repositories/payment.repository";
@@ -12,18 +5,10 @@ import type { TransactionManager } from "../../domain/repositories/transaction-m
 import { OrderNotFoundError } from "../errors/billing-application.errors";
 import type { PaymentGateway } from "../ports/payment-gateway";
 import type { PaymentIdGenerator } from "../ports/payment-id-generator";
-
-export interface CreatePaymentInput {
-  readonly orderId: OrderId;
-}
-
-export interface CreatePaymentOutput {
-  readonly paymentId: PaymentId;
-  readonly orderId: OrderId;
-  readonly status: PaymentStatus;
-  readonly amount: MoneyDTO;
-  readonly providerReference?: string;
-}
+import type {
+  CreatePaymentInput,
+  CreatePaymentOutput,
+} from "./interfaces/create-payment.interface";
 
 export class CreatePayment {
   constructor(

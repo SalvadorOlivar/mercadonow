@@ -27,9 +27,9 @@ Completado:
   manager para que los casos de uso sean dueños de la transacción.
 - Pruebas unitarias iniciales del dominio.
 
-El happy path ya existe en la capa de aplicación, pero todavía no es ejecutable
-por HTTP. `BillingModule` está registrado, pero los casos de uso, adaptadores de
-IDs, gateway y capa `presentation` aún no están cableados.
+El happy path está cableado de extremo a extremo mediante REST y PostgreSQL,
+con un gateway sandbox local. Los casos de uso mantienen la frontera
+transaccional y las suites unitarias, de integración y E2E cubren el flujo.
 
 ## Orden de ejecución recomendado
 
@@ -87,7 +87,7 @@ uso y persiste sus cambios de forma consistente.
 
 ### Etapa 4 — Exponer el flujo mediante HTTP
 
-8. **#26 — Create REST API**
+8. **#26 — Create REST API — completada**
    - Controllers delgados: HTTP → DTO → caso de uso.
    - DTOs y validación de entrada.
    - Serialización de dinero como `MoneyDTO`.
@@ -101,13 +101,13 @@ tienen un formato consistente.
 
 ### Etapa 5 — Consolidar la estrategia de pruebas
 
-9. **#28 — Add unit tests**
+9. **#28 — Add unit tests — completada**
    - Esta issue consolida cobertura y casos borde; las pruebas unitarias se
      escriben durante #22–#25, no se posponen hasta esta etapa.
-10. **#29 — Add integration tests**
+10. **#29 — Add integration tests — completada**
     - Probar adaptadores PostgreSQL contra una base real de test.
     - Verificar mapeo fila ↔ entidad, constraints y transacciones.
-11. **#30 — Add E2E tests**
+11. **#30 — Add E2E tests — completada**
     - Levantar la aplicación completa y recorrer el happy path REST.
     - Cubrir al menos validación de entrada, recurso inexistente y transición
       inválida.

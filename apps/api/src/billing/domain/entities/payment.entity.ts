@@ -6,14 +6,7 @@ import type {
 
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-
-export interface PaymentProps {
-  readonly id: PaymentId;
-  readonly orderId: OrderId;
-  readonly amount: Money;
-  readonly status?: PaymentStatus;
-  readonly providerReference?: string;
-}
+import type { PaymentProps } from "./interfaces/payment.interface";
 
 export class Payment {
   readonly id: PaymentId;
@@ -65,4 +58,3 @@ export class Payment {
     this.currentStatus = next;
   }
 }
-

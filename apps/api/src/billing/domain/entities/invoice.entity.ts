@@ -7,14 +7,7 @@ import type {
 
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-
-export interface InvoiceProps {
-  readonly id: InvoiceId;
-  readonly orderId: OrderId;
-  readonly paymentId: PaymentId;
-  readonly total: Money;
-  readonly status?: InvoiceStatus;
-}
+import type { InvoiceProps } from "./interfaces/invoice.interface";
 
 export class Invoice {
   readonly id: InvoiceId;
@@ -61,4 +54,3 @@ export class Invoice {
     this.currentStatus = next;
   }
 }
-

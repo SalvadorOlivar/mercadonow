@@ -1,8 +1,8 @@
 import { asId } from "@mercadonow/shared";
 
-import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
-import { Money } from "../value-objects/money";
-import { Payment } from "./payment.entity";
+import { InvalidStateTransitionError } from "../../errors/invalid-state-transition.error";
+import { Money } from "../../value-objects/money";
+import { Payment } from "../payment.entity";
 
 const createPayment = (): Payment =>
   new Payment({
@@ -33,4 +33,3 @@ describe("Payment", () => {
     expect(() => createPayment().refund()).toThrow(InvalidStateTransitionError);
   });
 });
-

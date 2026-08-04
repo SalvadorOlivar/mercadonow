@@ -1,25 +1,9 @@
-import type {
-  InvoiceId,
-  InvoiceStatus,
-  MoneyDTO,
-  OrderId,
-  PaymentId,
-} from "@mercadonow/shared";
-
 import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
 import { InvoiceNotFoundError } from "../errors/billing-application.errors";
-
-export interface GetInvoiceInput {
-  readonly invoiceId: InvoiceId;
-}
-
-export interface GetInvoiceOutput {
-  readonly invoiceId: InvoiceId;
-  readonly orderId: OrderId;
-  readonly paymentId: PaymentId;
-  readonly status: InvoiceStatus;
-  readonly total: MoneyDTO;
-}
+import type {
+  GetInvoiceInput,
+  GetInvoiceOutput,
+} from "./interfaces/get-invoice.interface";
 
 export class GetInvoice {
   constructor(private readonly invoiceRepository: InvoiceRepository) {}
