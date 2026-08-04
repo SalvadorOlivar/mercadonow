@@ -41,6 +41,14 @@ export class PostgresInvoiceRepository implements InvoiceRepository {
     return result.rows[0] === undefined ? null : this.toDomain(result.rows[0]);
   }
 
+  async findByPaymentId(paymentId: PaymentId): Promise<Invoice | null> {
+    const result = await this.database.query<InvoiceRow>(
+      "SELECT id, order_id, payment_id, total_amount, currency, status FROM invoices WHERE payment_id = $1",
+      [paymentId],
+    );
+    return result.rows[0] === undefined ? null : this.toDomain(result.rows[0]);
+  }
+
   async save(invoice: Invoice): Promise<void> {
     await this.database.query(
       `INSERT INTO invoices
@@ -74,4 +82,3 @@ export class PostgresInvoiceRepository implements InvoiceRepository {
     });
   }
 }
-
