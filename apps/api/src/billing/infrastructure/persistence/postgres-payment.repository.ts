@@ -2,21 +2,29 @@ import { Injectable } from "@nestjs/common";
 import type {
   OrderId,
   PaymentId,
-  PaymentStatus,
 } from "@mercadonow/shared";
+import { PAYMENT_STATUSES } from "@mercadonow/shared";
 
 import { DatabaseService } from "../../../database/database.service";
 import { Payment } from "../../domain/entities/payment.entity";
 import type { PaymentRepository } from "../../domain/repositories/payment.repository";
 import { Money } from "../../domain/value-objects/money";
+import {
+  mapPersistedAggregate,
+  toAllowedString,
+  toCurrency,
+  toOptionalNonBlankText,
+  toSafeCents,
+  toUuidV7Id,
+} from "./postgres-row.mapper";
 
 interface PaymentRow {
-  readonly id: string;
-  readonly order_id: string;
-  readonly amount: string;
-  readonly currency: "ARS" | "USD" | "EUR";
-  readonly status: PaymentStatus;
-  readonly provider_reference: string | null;
+  readonly id: unknown;
+  readonly order_id: unknown;
+  readonly amount: unknown;
+  readonly currency: unknown;
+  readonly status: unknown;
+  readonly provider_reference: unknown;
 }
 
 @Injectable()
@@ -64,13 +72,31 @@ export class PostgresPaymentRepository implements PaymentRepository {
   }
 
   private toDomain(row: PaymentRow): Payment {
-    return new Payment({
-      id: row.id as PaymentId,
-      orderId: row.order_id as OrderId,
-      amount: new Money(Number(row.amount), row.currency),
-      status: row.status,
-      providerReference: row.provider_reference ?? undefined,
-    });
+    return mapPersistedAggregate("payments", () =>
+      Payment.rehydrate({
+        id: toUuidV7Id(row.id, "PaymentId", "payments", "id"),
+        orderId: toUuidV7Id(
+          row.order_id,
+          "OrderId",
+          "payments",
+          "order_id",
+        ),
+        amount: new Money(
+          toSafeCents(row.amount, "payments", "amount"),
+          toCurrency(row.currency, "payments", "currency"),
+        ),
+        status: toAllowedString(
+          row.status,
+          PAYMENT_STATUSES,
+          "payments",
+          "status",
+        ),
+        providerReference: toOptionalNonBlankText(
+          row.provider_reference,
+          "payments",
+          "provider_reference",
+        ),
+      }),
+    );
   }
 }
-

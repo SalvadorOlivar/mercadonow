@@ -8,7 +8,11 @@ import type {
 import { DomainValidationError } from "../errors/domain-validation.error";
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-import type { OrderItem, OrderProps } from "./interfaces/order.interface";
+import type {
+  NewOrderProps,
+  OrderItem,
+  RehydratedOrderProps,
+} from "./interfaces/order.interface";
 
 export class Order {
   readonly id: OrderId;
@@ -19,7 +23,7 @@ export class Order {
   readonly total: Money;
   private currentStatus: OrderStatus;
 
-  constructor(props: OrderProps) {
+  private constructor(props: NewOrderProps, status: OrderStatus) {
     if (props.items.length === 0) {
       throw new DomainValidationError("Order must contain at least one item");
     }
@@ -39,10 +43,20 @@ export class Order {
     this.id = props.id;
     this.customerId = props.customerId;
     this.merchantId = props.merchantId;
-    this.items = props.items.map((item) => Object.freeze({ ...item }));
+    this.items = Object.freeze(
+      props.items.map((item) => Object.freeze({ ...item })),
+    );
     this.deliveryAddress = props.deliveryAddress.trim();
-    this.currentStatus = props.status ?? "PENDING_PAYMENT";
+    this.currentStatus = status;
     this.total = this.calculateTotal();
+  }
+
+  static create(props: NewOrderProps): Order {
+    return new Order(props, "PENDING_PAYMENT");
+  }
+
+  static rehydrate(props: RehydratedOrderProps): Order {
+    return new Order(props, props.status);
   }
 
   get status(): OrderStatus {

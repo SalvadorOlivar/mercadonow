@@ -2,10 +2,13 @@ import type { OrderId, PaymentId, PaymentStatus } from "@mercadonow/shared";
 
 import type { Money } from "../../value-objects/money";
 
-export interface PaymentProps {
+export interface NewPaymentProps {
   readonly id: PaymentId;
   readonly orderId: OrderId;
   readonly amount: Money;
-  readonly status?: PaymentStatus;
+}
+
+export interface RehydratedPaymentProps extends NewPaymentProps {
+  readonly status: PaymentStatus;
   readonly providerReference?: string;
 }

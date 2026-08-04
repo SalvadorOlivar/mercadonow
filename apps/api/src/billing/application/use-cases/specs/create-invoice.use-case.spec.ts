@@ -24,7 +24,7 @@ const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57890", "PaymentId");
 const invoiceId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57891", "InvoiceId");
 
 const makeOrder = () =>
-  new Order({
+  Order.create({
     id: orderId,
     customerId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57892", "CustomerId"),
     merchantId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57893", "MerchantId"),
@@ -33,7 +33,7 @@ const makeOrder = () =>
   });
 
 const makePayment = (authorized = true, associatedOrderId = orderId) => {
-  const payment = new Payment({
+  const payment = Payment.create({
     id: paymentId,
     orderId: associatedOrderId,
     amount: new Money(900, "ARS"),
@@ -43,7 +43,7 @@ const makePayment = (authorized = true, associatedOrderId = orderId) => {
 };
 
 const makeInvoice = () =>
-  new Invoice({
+  Invoice.create({
     id: invoiceId,
     orderId,
     paymentId,

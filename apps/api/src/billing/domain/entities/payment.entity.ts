@@ -4,9 +4,13 @@ import type {
   PaymentStatus,
 } from "@mercadonow/shared";
 
+import { DomainValidationError } from "../errors/domain-validation.error";
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-import type { PaymentProps } from "./interfaces/payment.interface";
+import type {
+  NewPaymentProps,
+  RehydratedPaymentProps,
+} from "./interfaces/payment.interface";
 
 export class Payment {
   readonly id: PaymentId;
@@ -15,12 +19,27 @@ export class Payment {
   private currentStatus: PaymentStatus;
   private currentProviderReference?: string;
 
-  constructor(props: PaymentProps) {
+  private constructor(
+    props: NewPaymentProps,
+    status: PaymentStatus,
+    providerReference?: string,
+  ) {
     this.id = props.id;
     this.orderId = props.orderId;
     this.amount = props.amount;
-    this.currentStatus = props.status ?? "PENDING";
-    this.currentProviderReference = props.providerReference;
+    this.currentStatus = status;
+    this.currentProviderReference = this.validateProviderReference(
+      status,
+      providerReference,
+    );
+  }
+
+  static create(props: NewPaymentProps): Payment {
+    return new Payment(props, "PENDING");
+  }
+
+  static rehydrate(props: RehydratedPaymentProps): Payment {
+    return new Payment(props, props.status, props.providerReference);
   }
 
   get status(): PaymentStatus {
@@ -39,7 +58,9 @@ export class Payment {
         "AUTHORIZED",
       );
     }
-    this.currentProviderReference = providerReference;
+    this.currentProviderReference = this.requireProviderReference(
+      providerReference,
+    );
     this.currentStatus = "AUTHORIZED";
   }
 
@@ -56,5 +77,32 @@ export class Payment {
       throw new InvalidStateTransitionError("Payment", this.currentStatus, next);
     }
     this.currentStatus = next;
+  }
+
+  private validateProviderReference(
+    status: PaymentStatus,
+    providerReference?: string,
+  ): string | undefined {
+    if (status === "AUTHORIZED" || status === "REFUNDED") {
+      return this.requireProviderReference(providerReference);
+    }
+    if (providerReference !== undefined) {
+      throw new DomainValidationError(
+        `Payment ${status} cannot have a provider reference`,
+      );
+    }
+    return undefined;
+  }
+
+  private requireProviderReference(providerReference?: string): string {
+    if (
+      providerReference === undefined ||
+      providerReference.trim().length === 0
+    ) {
+      throw new DomainValidationError(
+        "Authorized payment requires a provider reference",
+      );
+    }
+    return providerReference.trim();
   }
 }

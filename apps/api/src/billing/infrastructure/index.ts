@@ -13,3 +13,4 @@ export * from "./persistence/postgres-invoice.repository";
 export * from "./persistence/postgres-order.repository";
 export * from "./persistence/postgres-payment.repository";
 export * from "./persistence/postgres-transaction-manager";
+export * from "./persistence/persistence-mapping.error";

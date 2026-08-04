@@ -7,10 +7,13 @@ import type {
 
 import type { Money } from "../../value-objects/money";
 
-export interface InvoiceProps {
+export interface NewInvoiceProps {
   readonly id: InvoiceId;
   readonly orderId: OrderId;
   readonly paymentId: PaymentId;
   readonly total: Money;
-  readonly status?: InvoiceStatus;
+}
+
+export interface RehydratedInvoiceProps extends NewInvoiceProps {
+  readonly status: InvoiceStatus;
 }

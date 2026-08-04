@@ -17,7 +17,7 @@ export class CreateOrder {
 
   execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
     return this.transactionManager.run(async () => {
-      const order = new Order({
+      const order = Order.create({
         id: this.orderIdGenerator.generate(),
         customerId: input.customerId,
         merchantId: input.merchantId,

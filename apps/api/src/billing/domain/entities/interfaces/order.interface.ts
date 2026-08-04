@@ -13,11 +13,14 @@ export interface OrderItem {
   readonly unitPrice: Money;
 }
 
-export interface OrderProps {
+export interface NewOrderProps {
   readonly id: OrderId;
   readonly customerId: CustomerId;
   readonly merchantId: MerchantId;
   readonly items: readonly OrderItem[];
   readonly deliveryAddress: string;
-  readonly status?: OrderStatus;
+}
+
+export interface RehydratedOrderProps extends NewOrderProps {
+  readonly status: OrderStatus;
 }

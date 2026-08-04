@@ -7,7 +7,10 @@ import type {
 
 import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
 import { Money } from "../value-objects/money";
-import type { InvoiceProps } from "./interfaces/invoice.interface";
+import type {
+  NewInvoiceProps,
+  RehydratedInvoiceProps,
+} from "./interfaces/invoice.interface";
 
 export class Invoice {
   readonly id: InvoiceId;
@@ -16,12 +19,20 @@ export class Invoice {
   readonly total: Money;
   private currentStatus: InvoiceStatus;
 
-  constructor(props: InvoiceProps) {
+  private constructor(props: NewInvoiceProps, status: InvoiceStatus) {
     this.id = props.id;
     this.orderId = props.orderId;
     this.paymentId = props.paymentId;
     this.total = props.total;
-    this.currentStatus = props.status ?? "DRAFT";
+    this.currentStatus = status;
+  }
+
+  static create(props: NewInvoiceProps): Invoice {
+    return new Invoice(props, "DRAFT");
+  }
+
+  static rehydrate(props: RehydratedInvoiceProps): Invoice {
+    return new Invoice(props, props.status);
   }
 
   get status(): InvoiceStatus {

@@ -5,7 +5,7 @@ import { Money } from "../../value-objects/money";
 import { Invoice } from "../invoice.entity";
 
 const createInvoice = (): Invoice =>
-  new Invoice({
+  Invoice.create({
     id: asId("0198-invoice", "InvoiceId"),
     orderId: asId("0198-order", "OrderId"),
     paymentId: asId("0198-payment", "PaymentId"),
@@ -28,6 +28,18 @@ describe("Invoice", () => {
     invoice.markPaid();
 
     expect(invoice.status).toBe("PAID");
+  });
+
+  it("rehydrates an issued invoice without replaying its transition", () => {
+    const invoice = Invoice.rehydrate({
+      id: asId("0198-invoice", "InvoiceId"),
+      orderId: asId("0198-order", "OrderId"),
+      paymentId: asId("0198-payment", "PaymentId"),
+      total: new Money(3_500, "ARS"),
+      status: "ISSUED",
+    });
+
+    expect(invoice.status).toBe("ISSUED");
   });
 
   it("cannot mark a draft as paid", () => {

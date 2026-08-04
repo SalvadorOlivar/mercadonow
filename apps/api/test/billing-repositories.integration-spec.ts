@@ -9,6 +9,7 @@ import { PostgresInvoiceRepository } from "../src/billing/infrastructure/persist
 import { PostgresOrderRepository } from "../src/billing/infrastructure/persistence/postgres-order.repository";
 import { PostgresPaymentRepository } from "../src/billing/infrastructure/persistence/postgres-payment.repository";
 import { PostgresTransactionManager } from "../src/billing/infrastructure/persistence/postgres-transaction-manager";
+import { PersistenceMappingError } from "../src/billing/infrastructure/persistence/persistence-mapping.error";
 import { DatabaseService } from "../src/database/database.service";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
@@ -42,14 +43,14 @@ describe("PostgreSQL billing repositories", () => {
 
   it("round-trips the complete billing aggregate data", async () => {
     const order = makeOrder();
-    const payment = new Payment({
+    const payment = Payment.create({
       id: paymentId,
       orderId,
       amount: order.total,
     });
     payment.authorize("provider-integration");
     order.markPaid();
-    const invoice = new Invoice({
+    const invoice = Invoice.create({
       id: invoiceId,
       orderId,
       paymentId,
@@ -63,20 +64,75 @@ describe("PostgreSQL billing repositories", () => {
       await invoices.save(invoice);
     });
 
-    expect(await orders.findById(orderId)).toMatchObject({
+    const persistedOrder = await orders.findById(orderId);
+    expect(persistedOrder).toMatchObject({
       id: orderId,
       status: "PAID",
       deliveryAddress: "Integration address",
     });
+    expect(persistedOrder?.items.map((item) => item.productId)).toEqual([
+      "product-1",
+      "product-2",
+    ]);
     expect((await payments.findByOrderId(orderId))[0]).toMatchObject({
       id: paymentId,
       status: "AUTHORIZED",
       providerReference: "provider-integration",
     });
+    expect(await payments.findById(paymentId)).toMatchObject({
+      orderId,
+      status: "AUTHORIZED",
+    });
     expect(await invoices.findByPaymentId(paymentId)).toMatchObject({
       id: invoiceId,
       status: "ISSUED",
     });
+    expect(await invoices.findById(invoiceId)).toMatchObject({ orderId });
+    expect(await invoices.findByOrderId(orderId)).toMatchObject({ id: invoiceId });
+  });
+
+  it("updates and rehydrates aggregate state without replaying transitions", async () => {
+    const order = makeOrder();
+    const payment = Payment.create({ id: paymentId, orderId, amount: order.total });
+    const invoice = Invoice.create({
+      id: invoiceId,
+      orderId,
+      paymentId,
+      total: payment.amount,
+    });
+
+    await transactions.run(async () => {
+      await orders.save(order);
+      await payments.save(payment);
+      await invoices.save(invoice);
+    });
+
+    order.markPaid();
+    payment.authorize("provider-update");
+    invoice.issue();
+    await transactions.run(async () => {
+      await orders.save(order);
+      await payments.save(payment);
+      await invoices.save(invoice);
+    });
+
+    expect(await orders.findById(orderId)).toMatchObject({ status: "PAID" });
+    expect(await payments.findById(paymentId)).toMatchObject({
+      status: "AUTHORIZED",
+      providerReference: "provider-update",
+    });
+    expect(await invoices.findById(invoiceId)).toMatchObject({
+      status: "ISSUED",
+    });
+  });
+
+  it("returns null when aggregates do not exist", async () => {
+    expect(await orders.findById(orderId)).toBeNull();
+    expect(await payments.findById(paymentId)).toBeNull();
+    expect(await payments.findByOrderId(orderId)).toEqual([]);
+    expect(await invoices.findById(invoiceId)).toBeNull();
+    expect(await invoices.findByOrderId(orderId)).toBeNull();
+    expect(await invoices.findByPaymentId(paymentId)).toBeNull();
   });
 
   it("rolls back all repository writes when the application transaction fails", async () => {
@@ -92,17 +148,17 @@ describe("PostgreSQL billing repositories", () => {
 
   it("enforces one invoice per payment at the database boundary", async () => {
     const order = makeOrder();
-    const payment = new Payment({ id: paymentId, orderId, amount: order.total });
+    const payment = Payment.create({ id: paymentId, orderId, amount: order.total });
     payment.authorize("provider-integration");
     await orders.save(order);
     await payments.save(payment);
     await invoices.save(
-      new Invoice({ id: invoiceId, orderId, paymentId, total: payment.amount }),
+      Invoice.create({ id: invoiceId, orderId, paymentId, total: payment.amount }),
     );
 
     await expect(
       invoices.save(
-        new Invoice({
+        Invoice.create({
           id: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57891", "InvoiceId"),
           orderId,
           paymentId,
@@ -111,10 +167,84 @@ describe("PostgreSQL billing repositories", () => {
       ),
     ).rejects.toMatchObject({ code: "23505" });
   });
+
+  it("rejects an order whose stored total disagrees with its items", async () => {
+    await orders.save(makeOrder());
+    await database.query("UPDATE orders SET total_amount = 1 WHERE id = $1", [
+      orderId,
+    ]);
+
+    await expect(orders.findById(orderId)).rejects.toMatchObject({
+      code: "PERSISTENCE_MAPPING_ERROR",
+      source: "orders",
+      field: "total_amount",
+    });
+  });
+
+  it("distinguishes a corrupted order without items from a missing order", async () => {
+    await database.query(
+      `INSERT INTO orders
+         (id, customer_id, merchant_id, delivery_address, status,
+          total_amount, currency)
+       VALUES ($1, $2, $3, 'Missing items', 'PENDING_PAYMENT', 0, 'ARS')`,
+      [
+        orderId,
+        asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57892", "CustomerId"),
+        asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57893", "MerchantId"),
+      ],
+    );
+
+    await expect(orders.findById(orderId)).rejects.toMatchObject({
+      code: "PERSISTENCE_MAPPING_ERROR",
+      source: "order_items",
+      field: "product_id",
+    });
+  });
+
+  it("rejects persisted money outside the JavaScript safe integer range", async () => {
+    await database.query(
+      `INSERT INTO orders
+         (id, customer_id, merchant_id, delivery_address, status,
+          total_amount, currency)
+       VALUES ($1, $2, $3, 'Unsafe amount', 'PENDING_PAYMENT', $4, 'ARS')`,
+      [
+        orderId,
+        asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57892", "CustomerId"),
+        asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57893", "MerchantId"),
+        "9007199254740992",
+      ],
+    );
+    await database.query(
+      `INSERT INTO order_items
+         (order_id, position, product_id, quantity, unit_price_amount, currency)
+       VALUES ($1, 0, 'product-unsafe', 1, $2, 'ARS')`,
+      [orderId, "9007199254740992"],
+    );
+
+    await expect(orders.findById(orderId)).rejects.toBeInstanceOf(
+      PersistenceMappingError,
+    );
+  });
+
+  it("wraps invalid persisted aggregate state with repository context", async () => {
+    await orders.save(makeOrder());
+    await database.query(
+      `INSERT INTO payments
+         (id, order_id, amount, currency, status, provider_reference)
+       VALUES ($1, $2, 3000, 'ARS', 'AUTHORIZED', NULL)`,
+      [paymentId, orderId],
+    );
+
+    await expect(payments.findById(paymentId)).rejects.toMatchObject({
+      code: "PERSISTENCE_MAPPING_ERROR",
+      source: "payments",
+      field: "aggregate",
+    });
+  });
 });
 
 function makeOrder(): Order {
-  return new Order({
+  return Order.create({
     id: orderId,
     customerId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57892", "CustomerId"),
     merchantId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57893", "MerchantId"),

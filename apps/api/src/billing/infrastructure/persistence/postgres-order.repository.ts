@@ -1,26 +1,36 @@
 import { Injectable } from "@nestjs/common";
 import type {
-  CustomerId,
-  MerchantId,
   OrderId,
-  OrderStatus,
 } from "@mercadonow/shared";
+import { ORDER_STATUSES } from "@mercadonow/shared";
 
 import { DatabaseService } from "../../../database/database.service";
 import { Order } from "../../domain/entities/order.entity";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
 import { Money } from "../../domain/value-objects/money";
+import { PersistenceMappingError } from "./persistence-mapping.error";
+import {
+  mapPersistedAggregate,
+  toAllowedString,
+  toCurrency,
+  toNonBlankText,
+  toPositiveInteger,
+  toSafeCents,
+  toUuidV7Id,
+} from "./postgres-row.mapper";
 
 interface OrderRow {
-  readonly id: string;
-  readonly customer_id: string;
-  readonly merchant_id: string;
-  readonly delivery_address: string;
-  readonly status: OrderStatus;
-  readonly product_id: string;
-  readonly quantity: number;
-  readonly unit_price_amount: string;
-  readonly item_currency: "ARS" | "USD" | "EUR";
+  readonly id: unknown;
+  readonly customer_id: unknown;
+  readonly merchant_id: unknown;
+  readonly delivery_address: unknown;
+  readonly status: unknown;
+  readonly stored_total_amount: unknown;
+  readonly order_currency: unknown;
+  readonly product_id: unknown;
+  readonly quantity: unknown;
+  readonly unit_price_amount: unknown;
+  readonly item_currency: unknown;
 }
 
 @Injectable()
@@ -30,10 +40,12 @@ export class PostgresOrderRepository implements OrderRepository {
   async findById(id: OrderId): Promise<Order | null> {
     const result = await this.database.query<OrderRow>(
       `SELECT o.id, o.customer_id, o.merchant_id, o.delivery_address, o.status,
+              o.total_amount AS stored_total_amount,
+              o.currency AS order_currency,
               oi.product_id, oi.quantity, oi.unit_price_amount,
               oi.currency AS item_currency
          FROM orders o
-         JOIN order_items oi ON oi.order_id = o.id
+         LEFT JOIN order_items oi ON oi.order_id = o.id
         WHERE o.id = $1
         ORDER BY oi.position`,
       [id],
@@ -41,17 +53,69 @@ export class PostgresOrderRepository implements OrderRepository {
     const first = result.rows[0];
     if (first === undefined) return null;
 
-    return new Order({
-      id: first.id as OrderId,
-      customerId: first.customer_id as CustomerId,
-      merchantId: first.merchant_id as MerchantId,
-      deliveryAddress: first.delivery_address,
-      status: first.status,
-      items: result.rows.map((row) => ({
-        productId: row.product_id,
-        quantity: row.quantity,
-        unitPrice: new Money(Number(row.unit_price_amount), row.item_currency),
-      })),
+    return mapPersistedAggregate("orders", () => {
+      const order = Order.rehydrate({
+        id: toUuidV7Id(first.id, "OrderId", "orders", "id"),
+        customerId: toUuidV7Id(
+          first.customer_id,
+          "CustomerId",
+          "orders",
+          "customer_id",
+        ),
+        merchantId: toUuidV7Id(
+          first.merchant_id,
+          "MerchantId",
+          "orders",
+          "merchant_id",
+        ),
+        deliveryAddress: toNonBlankText(
+          first.delivery_address,
+          "orders",
+          "delivery_address",
+        ),
+        status: toAllowedString(
+          first.status,
+          ORDER_STATUSES,
+          "orders",
+          "status",
+        ),
+        items: result.rows.map((row) => ({
+          productId: toNonBlankText(
+            row.product_id,
+            "order_items",
+            "product_id",
+          ),
+          quantity: toPositiveInteger(
+            row.quantity,
+            "order_items",
+            "quantity",
+          ),
+          unitPrice: new Money(
+            toSafeCents(
+              row.unit_price_amount,
+              "order_items",
+              "unit_price_amount",
+            ),
+            toCurrency(row.item_currency, "order_items", "currency"),
+          ),
+        })),
+      });
+      const storedTotal = new Money(
+        toSafeCents(
+          first.stored_total_amount,
+          "orders",
+          "total_amount",
+        ),
+        toCurrency(first.order_currency, "orders", "currency"),
+      );
+      if (!order.total.equals(storedTotal)) {
+        throw new PersistenceMappingError(
+          "orders",
+          "total_amount",
+          "does not match the total calculated from order_items",
+        );
+      }
+      return order;
     });
   }
 
@@ -100,4 +164,3 @@ export class PostgresOrderRepository implements OrderRepository {
     }
   }
 }
-

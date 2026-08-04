@@ -15,7 +15,7 @@ const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "PaymentId");
 
 const makeOrder = () =>
-  new Order({
+  Order.create({
     id: orderId,
     customerId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57890", "CustomerId"),
     merchantId: asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57891", "MerchantId"),
@@ -26,7 +26,11 @@ const makeOrder = () =>
   });
 
 const makePayment = (status: "PENDING" | "AUTHORIZED" = "PENDING") => {
-  const payment = new Payment({ id: paymentId, orderId, amount: new Money(1_500, "ARS") });
+  const payment = Payment.create({
+    id: paymentId,
+    orderId,
+    amount: new Money(1_500, "ARS"),
+  });
   if (status === "AUTHORIZED") payment.authorize("provider-existing");
   return payment;
 };

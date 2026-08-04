@@ -1,23 +1,30 @@
 import { Injectable } from "@nestjs/common";
 import type {
   InvoiceId,
-  InvoiceStatus,
   OrderId,
   PaymentId,
 } from "@mercadonow/shared";
+import { INVOICE_STATUSES } from "@mercadonow/shared";
 
 import { DatabaseService } from "../../../database/database.service";
 import { Invoice } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
 import { Money } from "../../domain/value-objects/money";
+import {
+  mapPersistedAggregate,
+  toAllowedString,
+  toCurrency,
+  toSafeCents,
+  toUuidV7Id,
+} from "./postgres-row.mapper";
 
 interface InvoiceRow {
-  readonly id: string;
-  readonly order_id: string;
-  readonly payment_id: string;
-  readonly total_amount: string;
-  readonly currency: "ARS" | "USD" | "EUR";
-  readonly status: InvoiceStatus;
+  readonly id: unknown;
+  readonly order_id: unknown;
+  readonly payment_id: unknown;
+  readonly total_amount: unknown;
+  readonly currency: unknown;
+  readonly status: unknown;
 }
 
 @Injectable()
@@ -73,12 +80,36 @@ export class PostgresInvoiceRepository implements InvoiceRepository {
   }
 
   private toDomain(row: InvoiceRow): Invoice {
-    return new Invoice({
-      id: row.id as InvoiceId,
-      orderId: row.order_id as OrderId,
-      paymentId: row.payment_id as PaymentId,
-      total: new Money(Number(row.total_amount), row.currency),
-      status: row.status,
-    });
+    return mapPersistedAggregate("invoices", () =>
+      Invoice.rehydrate({
+        id: toUuidV7Id(row.id, "InvoiceId", "invoices", "id"),
+        orderId: toUuidV7Id(
+          row.order_id,
+          "OrderId",
+          "invoices",
+          "order_id",
+        ),
+        paymentId: toUuidV7Id(
+          row.payment_id,
+          "PaymentId",
+          "invoices",
+          "payment_id",
+        ),
+        total: new Money(
+          toSafeCents(
+            row.total_amount,
+            "invoices",
+            "total_amount",
+          ),
+          toCurrency(row.currency, "invoices", "currency"),
+        ),
+        status: toAllowedString(
+          row.status,
+          INVOICE_STATUSES,
+          "invoices",
+          "status",
+        ),
+      }),
+    );
   }
 }

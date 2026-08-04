@@ -41,7 +41,7 @@ export class CreateInvoice {
     const existing = await this.invoiceRepository.findByPaymentId(payment.id);
     if (existing !== null) throw new InvoiceAlreadyExistsError(payment.id);
 
-    const invoice = new Invoice({
+    const invoice = Invoice.create({
       id: this.invoiceIdGenerator.generate(),
       orderId: order.id,
       paymentId: payment.id,

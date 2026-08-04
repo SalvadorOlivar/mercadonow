@@ -16,5 +16,8 @@ describe("Money", () => {
       DomainValidationError,
     );
   });
-});
 
+  it("is immutable at runtime", () => {
+    expect(Object.isFrozen(new Money(100, "USD"))).toBe(true);
+  });
+});

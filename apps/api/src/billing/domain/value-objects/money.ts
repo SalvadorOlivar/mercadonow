@@ -15,6 +15,7 @@ export class Money {
 
     this.amount = amount;
     this.currency = currency;
+    Object.freeze(this);
   }
 
   add(other: Money): Money {
@@ -44,4 +45,3 @@ export class Money {
     }
   }
 }
-

@@ -19,7 +19,7 @@ const repositoryWith = (invoice: Invoice | null): InvoiceRepository => ({
 
 describe("GetInvoice", () => {
   it("returns a serializable output instead of the entity", async () => {
-    const invoice = new Invoice({
+    const invoice = Invoice.create({
       id: invoiceId,
       orderId,
       paymentId,

@@ -34,7 +34,7 @@ export class CreatePayment {
     );
     const payment =
       pending ??
-      new Payment({
+      Payment.create({
         id: this.paymentIdGenerator.generate(),
         orderId: order.id,
         amount: order.total,

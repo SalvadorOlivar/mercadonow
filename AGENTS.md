@@ -72,6 +72,7 @@ depends inward on the outbound ports it implements; it never imports presentatio
 
 - `domain/` — entities, value objects, domain errors, repository PORTS
   (interfaces). **Must not import** NestJS, `pg`, or anything from outer layers.
+  New aggregates use `create`; persistence reconstructs them with `rehydrate`.
 - `application/` — one use-case class per operation plus orchestration ports
   such as transactions, gateways and ID generation. Depends on domain. Owns
   the transaction boundary.
@@ -81,7 +82,8 @@ depends inward on the outbound ports it implements; it never imports presentatio
   No business logic.
 
 Controllers stay thin: HTTP → DTO → use case. Repositories do not own
-transactions (use cases do).
+transactions (use cases do). PostgreSQL rows are untrusted until infrastructure
+mappers validate UUID v7, enums, text and safe-integer money values.
 
 ## Conventions that differ from defaults
 

@@ -54,5 +54,7 @@ files rather than editing history.
 - Repository implementations will inject the shared pool/database service.
 - Repository implementations do not begin or commit transactions; application
   use cases invoke `TransactionManager.run` around an atomic operation.
+- Repository adapters validate database rows before branding IDs or rehydrating
+  aggregates; see ADR-004.
 - If schema evolution later requires richer tooling, the SQL files can be
   adopted by a dedicated migration tool without changing the domain.
