@@ -113,11 +113,38 @@ describe("CreateInvoice", () => {
       PaymentOrderMismatchError,
     ],
     ["pending payment", { payment: makePayment(false) }, PaymentNotAuthorizedError],
-    ["duplicate invoice", { existingInvoice: makeInvoice() }, InvoiceAlreadyExistsError],
   ])("rejects %s without persisting", async (_name, options, expectedError) => {
     const { invoiceRepository, useCase } = setup(options);
 
     await expect(useCase.execute({ orderId, paymentId })).rejects.toThrow(expectedError);
     expect(invoiceRepository.save).not.toHaveBeenCalled();
+  });
+
+  it("returns an existing invoice idempotently without persisting", async () => {
+    const existingInvoice = makeInvoice();
+    existingInvoice.issue();
+    const { invoiceRepository, useCase } = setup({ existingInvoice });
+
+    const output = await useCase.execute({ orderId, paymentId });
+
+    expect(output).toMatchObject({ invoiceId, paymentId, status: "ISSUED" });
+    expect(invoiceRepository.save).not.toHaveBeenCalled();
+  });
+
+  it("returns the winning invoice when the unique constraint settles a race", async () => {
+    const winningInvoice = makeInvoice();
+    winningInvoice.issue();
+    const { invoiceRepository, useCase } = setup();
+    invoiceRepository.findByPaymentId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(winningInvoice);
+    invoiceRepository.save.mockRejectedValueOnce(
+      new InvoiceAlreadyExistsError(paymentId),
+    );
+
+    const output = await useCase.execute({ orderId, paymentId });
+
+    expect(output).toMatchObject({ invoiceId, paymentId, status: "ISSUED" });
+    expect(invoiceRepository.findByPaymentId).toHaveBeenCalledTimes(2);
   });
 });

@@ -24,22 +24,38 @@ during network I/O and cannot make the provider call atomic with PostgreSQL.
 ## Decision
 
 `CreatePayment` also processes the payment through an application-layer
-`PaymentGateway` port. A new attempt is first persisted as `PENDING`. The gateway
-is called outside a database transaction using the `PaymentId` as its stable
-retry identity. The resulting payment and order state are then persisted in a
-transaction. A retry reuses a `PENDING` attempt, returns an `AUTHORIZED` attempt
-without charging again, and may create a new attempt after a `FAILED` result.
+`PaymentGateway` port. A new logical attempt is first persisted as `PENDING`.
+The attempt's `PaymentId` is its stable idempotency identity at both the database
+and provider boundaries. The gateway is called outside a database transaction
+with that identity, so repeated calls for the same attempt must resolve to one
+logical provider charge. The resulting payment and order state are then
+persisted in a transaction.
+
+PostgreSQL owns the final concurrency guarantee through a partial unique index
+on `payments(order_id)` for `PENDING` and `AUTHORIZED` rows. If concurrent
+requests generate different IDs, only one claim is persisted; the loser reloads
+and reuses the winner's `PaymentId`. This avoids holding a transaction open
+during provider I/O while making the pre-check an optimization rather than the
+correctness boundary.
+
+Retry semantics are explicit:
+
+- `PENDING`: reuse its `PaymentId` and safely repeat the idempotent gateway call.
+- `AUTHORIZED`: return the persisted result without calling the gateway.
+- `FAILED`: the logical attempt is complete; a retry may claim a new `PaymentId`.
 
 ## Trade-offs
 
 There are two local transactions instead of one, and a crashed request can leave
 a visible `PENDING` payment. In return, retries can recover that attempt and no
-database transaction spans external I/O. Concurrent requests will require a
-stronger idempotency constraint when a real provider is introduced.
+database transaction spans external I/O. A real provider adapter must honor the
+`PaymentId` as its idempotency key; the local sandbox deterministically does so.
 
 ## Consequences
 
 - Payment gateways implement a framework-independent application port.
+- At most one `PENDING` or `AUTHORIZED` payment exists per order; historical
+  `FAILED` attempts remain available.
 - Authorization rejection is a persisted `FAILED` payment, not an exception.
 - Invoice creation accepts only `AUTHORIZED` payments and enforces one invoice
   per payment in both application logic and the existing database constraint.

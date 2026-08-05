@@ -4,6 +4,9 @@
 - Date: 2026-08-04
 - Scope: Billing HTTP boundary, shared contracts and runtime configuration
 
+> ADR-006 moves Billing HTTP DTOs/controllers to `adapters/in/http`; the public
+> contract and the application-wide `common/http` filter remain unchanged.
+
 ## Context
 
 Billing request/response types were split between application and presentation,

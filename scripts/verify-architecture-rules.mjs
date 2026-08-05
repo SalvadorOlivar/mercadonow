@@ -16,12 +16,19 @@ const probes = [
   {
     name: "application cannot import infrastructure",
     filePath: "apps/api/src/billing/application/architecture-probe.ts",
-    code: 'import "../infrastructure/index";',
+    code: 'import "../infrastructure/adapters/out/db/typeorm/entity";',
   },
   {
-    name: "infrastructure cannot import presentation",
-    filePath: "apps/api/src/billing/infrastructure/architecture-probe.ts",
-    code: 'import "../presentation/index";',
+    name: "outbound adapters cannot import inbound adapters",
+    filePath:
+      "apps/api/src/billing/infrastructure/adapters/out/architecture-probe.ts",
+    code: 'import "../in/http/billing.controller";',
+  },
+  {
+    name: "inbound adapters cannot import outbound adapters",
+    filePath:
+      "apps/api/src/billing/infrastructure/adapters/in/architecture-probe.ts",
+    code: 'import "../out/db/typeorm/entity";',
   },
   {
     name: "shared cannot import React",

@@ -5,14 +5,15 @@
  *   domain/          Entities, value objects, domain errors, ports (interfaces).
  *                    No NestJS, no ORM, no I/O. Pure TypeScript.
  *   application/     Use cases and orchestration ports. Depends on domain.
- *   infrastructure/  Adapters: PostgreSQL repositories, external gateways.
- *   presentation/    NestJS controllers, DTOs, exception filters.
+ *   infrastructure/adapters/in/   HTTP controllers and DTOs.
+ *   infrastructure/adapters/out/  TypeORM repositories and external adapters.
  *
- * Dependency direction: presentation -> application -> domain, while
- * infrastructure -> application/domain to implement outbound ports.
+ * Dependency direction: adapters -> application -> domain. Inbound and
+ * outbound adapters do not depend on one another.
  * BillingModule is the composition root and may import every layer.
  */
 import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { DatabaseModule } from "../database/database.module";
 import { CreateInvoice } from "./application/use-cases/create-invoice.use-case";
 import { CreateOrder } from "./application/use-cases/create-order.use-case";
@@ -29,27 +30,30 @@ import {
 import { INVOICE_REPOSITORY } from "./domain/repositories/invoice.repository";
 import { ORDER_REPOSITORY } from "./domain/repositories/order.repository";
 import { PAYMENT_REPOSITORY } from "./domain/repositories/payment.repository";
-import { PostgresInvoiceRepository } from "./infrastructure/persistence/postgres-invoice.repository";
-import { PostgresOrderRepository } from "./infrastructure/persistence/postgres-order.repository";
-import { PostgresPaymentRepository } from "./infrastructure/persistence/postgres-payment.repository";
-import { PostgresTransactionManager } from "./infrastructure/persistence/postgres-transaction-manager";
-import { SandboxPaymentGateway } from "./infrastructure/gateways/sandbox-payment.gateway";
-import { UuidV7InvoiceIdGenerator } from "./infrastructure/ids/uuid-v7-invoice-id-generator";
-import { UuidV7OrderIdGenerator } from "./infrastructure/ids/uuid-v7-order-id-generator";
-import { UuidV7PaymentIdGenerator } from "./infrastructure/ids/uuid-v7-payment-id-generator";
-import { BillingController } from "./presentation/billing.controller";
+import { BillingController } from "./infrastructure/adapters/in/http/billing.controller";
+import { BILLING_TYPEORM_ENTITIES } from "./infrastructure/adapters/out/db/typeorm/entity";
+import { TypeOrmInvoiceRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-invoice.repository";
+import { TypeOrmOrderRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-order.repository";
+import { TypeOrmPaymentRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-payment.repository";
+import { TypeOrmEntityManagerContext } from "./infrastructure/adapters/out/db/typeorm/typeorm-entity-manager.context";
+import { TypeOrmTransactionManager } from "./infrastructure/adapters/out/db/typeorm/typeorm-transaction.manager";
+import { UuidV7InvoiceIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-invoice-id-generator";
+import { UuidV7OrderIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-order-id-generator";
+import { UuidV7PaymentIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-payment-id-generator";
+import { SandboxPaymentGateway } from "./infrastructure/adapters/out/integration/sandbox-payment.gateway";
 import type { InvoiceRepository } from "./domain/repositories/invoice.repository";
 import type { OrderRepository } from "./domain/repositories/order.repository";
 import type { PaymentRepository } from "./domain/repositories/payment.repository";
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, TypeOrmModule.forFeature([...BILLING_TYPEORM_ENTITIES])],
   controllers: [BillingController],
   providers: [
-    { provide: ORDER_REPOSITORY, useClass: PostgresOrderRepository },
-    { provide: PAYMENT_REPOSITORY, useClass: PostgresPaymentRepository },
-    { provide: INVOICE_REPOSITORY, useClass: PostgresInvoiceRepository },
-    { provide: TRANSACTION_MANAGER, useClass: PostgresTransactionManager },
+    TypeOrmEntityManagerContext,
+    { provide: ORDER_REPOSITORY, useClass: TypeOrmOrderRepository },
+    { provide: PAYMENT_REPOSITORY, useClass: TypeOrmPaymentRepository },
+    { provide: INVOICE_REPOSITORY, useClass: TypeOrmInvoiceRepository },
+    { provide: TRANSACTION_MANAGER, useClass: TypeOrmTransactionManager },
     UuidV7OrderIdGenerator,
     UuidV7PaymentIdGenerator,
     UuidV7InvoiceIdGenerator,

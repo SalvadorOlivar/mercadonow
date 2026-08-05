@@ -1,7 +1,13 @@
+import type { OrderId } from "@mercadonow/shared";
+
 import { Payment } from "../../domain/entities/payment.entity";
 import type { OrderRepository } from "../../domain/repositories/order.repository";
 import type { PaymentRepository } from "../../domain/repositories/payment.repository";
-import { OrderNotFoundError } from "../errors/billing-application.errors";
+import type { Money } from "../../domain/value-objects/money";
+import {
+  ActivePaymentAlreadyExistsError,
+  OrderNotFoundError,
+} from "../errors/billing-application.errors";
 import type { PaymentGateway } from "../ports/payment-gateway";
 import type { PaymentIdGenerator } from "../ports/payment-id-generator";
 import type { TransactionManager } from "../ports/transaction-manager";
@@ -23,26 +29,8 @@ export class CreatePayment {
     const order = await this.orderRepository.findById(input.orderId);
     if (order === null) throw new OrderNotFoundError(input.orderId);
 
-    const previousPayments = await this.paymentRepository.findByOrderId(order.id);
-    const authorized = previousPayments.find(
-      (payment) => payment.status === "AUTHORIZED",
-    );
-    if (authorized !== undefined) return this.toOutput(authorized);
-
-    const pending = previousPayments.find(
-      (payment) => payment.status === "PENDING",
-    );
-    const payment =
-      pending ??
-      Payment.create({
-        id: this.paymentIdGenerator.generate(),
-        orderId: order.id,
-        amount: order.total,
-      });
-
-    if (pending === undefined) {
-      await this.transactionManager.run(() => this.paymentRepository.save(payment));
-    }
+    const payment = await this.claimPayment(order.id, order.total);
+    if (payment.status === "AUTHORIZED") return this.toOutput(payment);
 
     const result = await this.paymentGateway.authorize({
       paymentId: payment.id,
@@ -64,6 +52,41 @@ export class CreatePayment {
     });
 
     return this.toOutput(payment);
+  }
+
+  private async claimPayment(
+    orderId: OrderId,
+    amount: Money,
+  ): Promise<Payment> {
+    while (true) {
+      const previousPayments = await this.paymentRepository.findByOrderId(orderId);
+      const authorized = previousPayments.find(
+        (payment) => payment.status === "AUTHORIZED",
+      );
+      if (authorized !== undefined) return authorized;
+
+      const pending = previousPayments.find(
+        (payment) => payment.status === "PENDING",
+      );
+      if (pending !== undefined) return pending;
+
+      const payment = Payment.create({
+        id: this.paymentIdGenerator.generate(),
+        orderId,
+        amount,
+      });
+
+      try {
+        await this.transactionManager.run(() =>
+          this.paymentRepository.save(payment),
+        );
+        return payment;
+      } catch (error) {
+        if (!(error instanceof ActivePaymentAlreadyExistsError)) throw error;
+        // Another request claimed the order. Re-read its stable attempt. If it
+        // already failed, the retry policy deliberately permits a fresh claim.
+      }
+    }
   }
 
   private toOutput(payment: Payment): CreatePaymentOutput {

@@ -1,4 +1,4 @@
-import { runMigrations } from "./migration-runner";
+import { createTypeOrmDataSource } from "../src/database/typeorm-data-source";
 
 async function migrate(): Promise<void> {
   const connectionString = process.env.DATABASE_URL;
@@ -6,11 +6,17 @@ async function migrate(): Promise<void> {
     throw new Error("DATABASE_URL is required");
   }
 
-  await runMigrations({
-    connectionString,
-    onMigrationApplied: (name) => process.stdout.write(`Applied ${name}\n`),
-  });
-  process.stdout.write("Database is up to date\n");
+  const dataSource = createTypeOrmDataSource(connectionString);
+  await dataSource.initialize();
+  try {
+    const migrations = await dataSource.runMigrations({ transaction: "each" });
+    for (const migration of migrations) {
+      process.stdout.write(`Applied ${migration.name}\n`);
+    }
+    process.stdout.write("Database is up to date\n");
+  } finally {
+    await dataSource.destroy();
+  }
 }
 
 migrate().catch((error: unknown) => {

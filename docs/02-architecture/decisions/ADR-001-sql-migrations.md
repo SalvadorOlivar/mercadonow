@@ -1,6 +1,6 @@
 # ADR-001 — PostgreSQL access and SQL migrations
 
-- Status: Accepted
+- Status: Superseded by ADR-006
 - Date: 2026-08-04
 - Scope: API infrastructure
 

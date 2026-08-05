@@ -4,6 +4,9 @@
 - Date: 2026-08-04
 - Scope: Billing module and shared contracts
 
+> ADR-006 refines `presentation` and `infrastructure` into explicit inbound and
+> outbound adapters. The ownership and dependency principles below still apply.
+
 ## Context
 
 ADR-000 established four Billing layers, but its compact dependency diagram

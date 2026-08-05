@@ -1,13 +1,10 @@
-import { Client } from "pg";
+import { DataSource } from "typeorm";
 
-import { runMigrations } from "../scripts/migration-runner";
-
-const DEFAULT_TEST_DATABASE_URL =
-  "postgres://mercadonow:mercadonow@localhost:5432/mercadonow_test";
+import { createTypeOrmDataSource } from "../src/database/typeorm-data-source";
+import { resolveTestDatabaseUrl } from "./test-database-url";
 
 export default async function globalSetup(): Promise<void> {
-  const connectionString =
-    process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL;
+  const connectionString = resolveTestDatabaseUrl();
   const testUrl = new URL(connectionString);
   const databaseName = testUrl.pathname.slice(1);
   if (!/^[a-z0-9_]+$/.test(databaseName) || !databaseName.endsWith("_test")) {
@@ -16,28 +13,27 @@ export default async function globalSetup(): Promise<void> {
 
   const adminUrl = new URL(testUrl);
   adminUrl.pathname = "/postgres";
-  const admin = new Client({ connectionString: adminUrl.toString() });
-  await admin.connect();
+  const admin = new DataSource({ type: "postgres", url: adminUrl.toString() });
+  await admin.initialize();
   try {
-    const existing = await admin.query<{ exists: boolean }>(
+    const existing = await admin.query<Array<{ exists: boolean }>>(
       "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1) AS exists",
       [databaseName],
     );
-    if (existing.rows[0]?.exists !== true) {
+    if (existing[0]?.exists !== true) {
       await admin.query(`CREATE DATABASE "${databaseName}"`);
     }
   } finally {
-    await admin.end();
+    await admin.destroy();
   }
 
-  const testClient = new Client({ connectionString });
-  await testClient.connect();
+  const testDataSource = createTypeOrmDataSource(connectionString);
+  await testDataSource.initialize();
   try {
-    await testClient.query("DROP SCHEMA public CASCADE");
-    await testClient.query("CREATE SCHEMA public");
+    await testDataSource.query("DROP SCHEMA public CASCADE");
+    await testDataSource.query("CREATE SCHEMA public");
+    await testDataSource.runMigrations({ transaction: "each" });
   } finally {
-    await testClient.end();
+    await testDataSource.destroy();
   }
-
-  await runMigrations({ connectionString });
 }

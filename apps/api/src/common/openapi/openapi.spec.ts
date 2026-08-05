@@ -5,7 +5,7 @@ import { CreateInvoice } from "../../billing/application/use-cases/create-invoic
 import { CreateOrder } from "../../billing/application/use-cases/create-order.use-case";
 import { CreatePayment } from "../../billing/application/use-cases/create-payment.use-case";
 import { GetInvoice } from "../../billing/application/use-cases/get-invoice.use-case";
-import { BillingController } from "../../billing/presentation/billing.controller";
+import { BillingController } from "../../billing/infrastructure/adapters/in/http/billing.controller";
 import { createOpenApiDocument } from "./openapi";
 
 describe("Billing OpenAPI", () => {

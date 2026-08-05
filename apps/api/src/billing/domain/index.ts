@@ -2,7 +2,7 @@
  * Domain layer — billing.
  *
  * Entities, value objects, domain errors, and repository PORTS (interfaces).
- * Must not import anything from application, infrastructure, or presentation.
+ * Must not import anything from application or infrastructure adapters.
  * Must not import NestJS, pg, or any I/O library.
  */
 export * from "./entities/invoice.entity";

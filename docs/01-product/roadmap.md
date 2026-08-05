@@ -26,9 +26,10 @@ Completado:
 - #36 taxonomía exhaustiva de errores esperados.
 - #41 configuración de runtime validada y CORS restringido.
 - #34 OpenAPI generado y verificado desde los DTOs reales.
+- #42 migración a adaptadores hexagonales y TypeORM — en curso.
 - `Money`, errores de dominio y puertos `OrderRepository`,
   `PaymentRepository` e `InvoiceRepository`.
-- Adaptadores PostgreSQL para órdenes, pagos y facturas, con un transaction
+- Adaptadores TypeORM/PostgreSQL para órdenes, pagos y facturas, con un transaction
   manager para que los casos de uso sean dueños de la transacción.
 - Pruebas unitarias iniciales del dominio.
 
@@ -57,9 +58,9 @@ reglas están cubiertas por pruebas.
    - Crear tablas para orders, order items, payments e invoices.
    - Incluir claves, estados, importes en centavos e índices necesarios.
 4. **Hueco de planificación — implementar adaptadores PostgreSQL — completado**
-   - `PostgresOrderRepository`.
-   - `PostgresPaymentRepository`.
-   - `PostgresInvoiceRepository`.
+   - `TypeOrmOrderRepository`.
+   - `TypeOrmPaymentRepository`.
+   - `TypeOrmInvoiceRepository`.
    - Unidad de trabajo/transacción en la capa de aplicación cuando una
      operación modifique más de un agregado.
 

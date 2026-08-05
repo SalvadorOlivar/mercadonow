@@ -39,7 +39,7 @@ export class CreateInvoice {
     }
 
     const existing = await this.invoiceRepository.findByPaymentId(payment.id);
-    if (existing !== null) throw new InvoiceAlreadyExistsError(payment.id);
+    if (existing !== null) return this.toOutput(existing);
 
     const invoice = Invoice.create({
       id: this.invoiceIdGenerator.generate(),
@@ -49,8 +49,25 @@ export class CreateInvoice {
     });
     invoice.issue();
 
-    await this.transactionManager.run(() => this.invoiceRepository.save(invoice));
+    try {
+      await this.transactionManager.run(() => this.invoiceRepository.save(invoice));
+    } catch (error) {
+      if (!(error instanceof InvoiceAlreadyExistsError)) throw error;
 
+      // The failed INSERT transaction has rolled back before this read. The
+      // unique payment_id constraint guarantees that the winning invoice is
+      // now the stable idempotent result.
+      const concurrentInvoice = await this.invoiceRepository.findByPaymentId(
+        payment.id,
+      );
+      if (concurrentInvoice === null) throw error;
+      return this.toOutput(concurrentInvoice);
+    }
+
+    return this.toOutput(invoice);
+  }
+
+  private toOutput(invoice: Invoice): CreateInvoiceOutput {
     return {
       invoiceId: invoice.id,
       orderId: invoice.orderId,

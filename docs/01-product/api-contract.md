@@ -10,8 +10,8 @@ OpenAPI document describes the HTTP representation of the same contract.
 | Operation | Request | Success | Expected errors |
 | --- | --- | --- | --- |
 | `POST /orders` | JSON body: `CreateOrderRequest` | `201 CreateOrderResponse` | `400` validation/domain input |
-| `POST /orders/:orderId/payments` | UUID v7 path parameter | `201 CreatePaymentResponse` | `400`, `404`, `409` |
-| `POST /orders/:orderId/invoices` | UUID v7 path parameter and `paymentId` body | `201 CreateInvoiceResponse` | `400`, `404`, `409` |
+| `POST /orders/:orderId/payments` | UUID v7 path parameter | `201 CreatePaymentResponse`; concurrent/retried requests reuse the active logical payment | `400`, `404`, `409` |
+| `POST /orders/:orderId/invoices` | UUID v7 path parameter and `paymentId` body | `201 CreateInvoiceResponse`; creation and idempotent replay return the same invoice | `400`, `404`, `409` |
 | `GET /invoices/:invoiceId` | UUID v7 path parameter | `200 GetInvoiceResponse` | `400`, `404` |
 
 Money is always `{ amount, currency }`, where `amount` is a non-negative safe

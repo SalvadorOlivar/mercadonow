@@ -1,26 +1,21 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Pool } from "pg";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { POSTGRES_POOL } from "./database.constants";
-import { DatabaseService } from "./database.service";
 import type { EnvironmentVariables } from "../config/environment";
+import { createTypeOrmOptions } from "./typeorm-data-source";
 
 @Global()
 @Module({
-  providers: [
-    {
-      provide: POSTGRES_POOL,
+  imports: [
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvironmentVariables>): Pool => {
-        const connectionString = config.getOrThrow("DATABASE_URL", {
-          infer: true,
-        });
-        return new Pool({ connectionString });
-      },
-    },
-    DatabaseService,
+      useFactory: (config: ConfigService<EnvironmentVariables>) =>
+        createTypeOrmOptions(
+          config.getOrThrow("DATABASE_URL", { infer: true }),
+        ),
+    }),
   ],
-  exports: [POSTGRES_POOL, DatabaseService],
+  exports: [TypeOrmModule],
 })
 export class DatabaseModule {}

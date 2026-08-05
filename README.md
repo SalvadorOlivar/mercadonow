@@ -220,12 +220,21 @@ El comando ejecuta typecheck, lint, pruebas unitarias, pruebas de integración,
 E2E y build. Las suites que usan PostgreSQL requieren el servicio local:
 
 ```bash
+cp .env.example .env
+# Reemplazar todos los valores replace_with_* antes de continuar.
 docker compose up -d postgres
 ```
 
+Docker Compose exige que `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB`
+estén definidos en el `.env`. `DATABASE_URL` debe usar esos mismos valores.
+Ninguna credencial utilizable se publica en `.env.example`.
+
 Las pruebas crean y reinicializan exclusivamente una base cuyo nombre termina
-en `_test`; por defecto usan `mercadonow_test`. El setup aplica todas las
-migraciones vigentes mediante el mismo runner utilizado en desarrollo.
+en `_test`; por defecto derivan su nombre y credenciales de `DATABASE_URL`.
+El setup aplica las mismas migraciones TypeORM utilizadas en desarrollo.
+`TEST_DATABASE_URL` permite sobrescribir esa URL. Al adoptar TypeORM por primera
+vez, las bases locales creadas por el runner SQL anterior requieren
+`docker compose down -v` antes de volver a iniciar PostgreSQL.
 
 ---
 

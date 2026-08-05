@@ -5,7 +5,10 @@ import { Payment } from "../../../domain/entities/payment.entity";
 import type { OrderRepository } from "../../../domain/repositories/order.repository";
 import type { PaymentRepository } from "../../../domain/repositories/payment.repository";
 import { Money } from "../../../domain/value-objects/money";
-import { OrderNotFoundError } from "../../errors/billing-application.errors";
+import {
+  ActivePaymentAlreadyExistsError,
+  OrderNotFoundError,
+} from "../../errors/billing-application.errors";
 import type { PaymentGateway } from "../../ports/payment-gateway";
 import type { PaymentIdGenerator } from "../../ports/payment-id-generator";
 import type { TransactionManager } from "../../ports/transaction-manager";
@@ -13,6 +16,10 @@ import { CreatePayment } from "../create-payment.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "PaymentId");
+const failedPaymentId = asId(
+  "0198f5ef-b5bd-7c86-a7b2-bc32c5c57894",
+  "PaymentId",
+);
 
 const makeOrder = () =>
   Order.create({
@@ -25,13 +32,17 @@ const makeOrder = () =>
     ],
   });
 
-const makePayment = (status: "PENDING" | "AUTHORIZED" = "PENDING") => {
+const makePayment = (
+  status: "PENDING" | "AUTHORIZED" | "FAILED" = "PENDING",
+  id = paymentId,
+) => {
   const payment = Payment.create({
-    id: paymentId,
+    id,
     orderId,
     amount: new Money(1_500, "ARS"),
   });
   if (status === "AUTHORIZED") payment.authorize("provider-existing");
+  if (status === "FAILED") payment.fail();
   return payment;
 };
 
@@ -126,6 +137,39 @@ describe("CreatePayment", () => {
     expect(output.status).toBe("AUTHORIZED");
     expect(gateway.authorize).not.toHaveBeenCalled();
     expect(paymentRepository.save).not.toHaveBeenCalled();
+  });
+
+  it("creates a fresh logical attempt after a failed payment", async () => {
+    const failed = makePayment("FAILED", failedPaymentId);
+    const { gateway, paymentRepository, useCase } = setup({ payments: [failed] });
+
+    await useCase.execute({ orderId });
+
+    expect(gateway.authorize).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId }),
+    );
+    expect(gateway.authorize).not.toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId: failedPaymentId }),
+    );
+    expect(paymentRepository.save).toHaveBeenCalledTimes(2);
+  });
+
+  it("recovers a concurrent claim and uses the winner's stable gateway identity", async () => {
+    const pending = makePayment();
+    const { gateway, paymentRepository, useCase } = setup();
+    paymentRepository.findByOrderId
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([pending]);
+    paymentRepository.save.mockRejectedValueOnce(
+      new ActivePaymentAlreadyExistsError(orderId),
+    );
+
+    const output = await useCase.execute({ orderId });
+
+    expect(output.paymentId).toBe(paymentId);
+    expect(gateway.authorize).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentId }),
+    );
   });
 
   it("throws a typed error when the order does not exist", async () => {

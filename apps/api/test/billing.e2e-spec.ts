@@ -1,26 +1,26 @@
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { DataSource } from "typeorm";
 
 import { AppModule } from "../src/app.module";
-import { DatabaseService } from "../src/database/database.service";
 
 const customerId = "0198f5ef-b5bd-7c86-a7b2-bc32c5c57888";
 const merchantId = "0198f5ef-b5bd-7c86-a7b2-bc32c5c57889";
 
 describe("Billing REST API", () => {
   let app: INestApplication;
-  let database: DatabaseService;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     await app.init();
-    database = app.get(DatabaseService);
+    dataSource = app.get(DataSource);
   });
 
   beforeEach(async () => {
-    await database.query("TRUNCATE invoices, payments, order_items, orders CASCADE");
+    await dataSource.query("TRUNCATE invoices, payments, order_items, orders CASCADE");
   });
 
   afterAll(async () => {
@@ -101,7 +101,7 @@ describe("Billing REST API", () => {
       .send(validOrderBody())
       .expect(201);
     const pendingPaymentId = "0198f5ef-b5bd-7c86-a7b2-bc32c5c57891";
-    await database.query(
+    await dataSource.query(
       `INSERT INTO payments (id, order_id, amount, currency, status)
        VALUES ($1, $2, $3, $4, 'PENDING')`,
       [pendingPaymentId, orderResponse.body.orderId, 3_500, "ARS"],
@@ -113,6 +113,25 @@ describe("Billing REST API", () => {
       .expect(409);
 
     expect(response.body.error.code).toBe("PAYMENT_NOT_AUTHORIZED");
+  });
+
+  it("returns 201 and the same invoice for an idempotent replay", async () => {
+    const orderResponse = await request(app.getHttpServer())
+      .post("/orders")
+      .send(validOrderBody())
+      .expect(201);
+    const paymentResponse = await request(app.getHttpServer())
+      .post(`/orders/${orderResponse.body.orderId as string}/payments`)
+      .expect(201);
+    const invoiceRequest = () =>
+      request(app.getHttpServer())
+        .post(`/orders/${orderResponse.body.orderId as string}/invoices`)
+        .send({ paymentId: paymentResponse.body.paymentId });
+
+    const created = await invoiceRequest().expect(201);
+    const replay = await invoiceRequest().expect(201);
+
+    expect(replay.body).toEqual(created.body);
   });
 });
 

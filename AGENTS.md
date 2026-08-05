@@ -58,38 +58,39 @@ are explicitly approved under `allowBuilds` in `pnpm-workspace.yaml`; do not
 use `dangerouslyAllowAllBuilds`. When one of these dependencies is upgraded,
 review its install script and update the matching version deliberately.
 
-## Architecture rules (enforced by review, not tooling yet)
+## Architecture rules (enforced by lint and review)
 
-`apps/api/src/billing` has four layers. **Dependency direction is one-way:**
+`apps/api/src/billing` uses a hexagonal adapter layout. **Dependency direction is one-way:**
 
 ```
-presentation -> application -> domain
-infrastructure -> application / domain
+adapters/in -> application -> domain
+adapters/out -> application / domain
 ```
 
-`BillingModule` is the composition root and may import every layer. Infrastructure
-depends inward on the outbound ports it implements; it never imports presentation.
+`BillingModule` is the composition root and may import every layer. Inbound and
+outbound adapters depend inward and never import one another.
 
 - `domain/` — entities, value objects, domain errors, repository PORTS
-  (interfaces). **Must not import** NestJS, `pg`, or anything from outer layers.
+  (interfaces). **Must not import** NestJS, TypeORM, `pg`, or outer layers.
   New aggregates use `create`; persistence reconstructs them with `rehydrate`.
 - `application/` — one use-case class per operation plus orchestration ports
   such as transactions, gateways and ID generation. Depends on domain. Owns
   the transaction boundary.
-- `infrastructure/` — adapters implementing domain/application ports (PG
-  repositories, transactions, gateways and ID generators).
-- `presentation/` — thin NestJS controllers, DTOs, the exception filter.
-  No business logic.
+- `infrastructure/adapters/in/http/` — thin NestJS controllers and DTOs. No
+  business logic. Application-wide pipes and filters remain in `common/http`.
+- `infrastructure/adapters/out/` — adapters implementing domain/application
+  ports: TypeORM repositories and transactions, gateways and ID generators.
 
 Controllers stay thin: HTTP → DTO → use case. Repositories do not own
-transactions (use cases do). PostgreSQL rows are untrusted until infrastructure
-mappers validate UUID v7, enums, text and safe-integer money values.
+transactions (use cases do). TypeORM entities are persistence models, never
+domain entities. Hydrated values remain untrusted until mappers validate UUID
+v7, enums, text and safe-integer money values.
 
 ## Conventions that differ from defaults
 
 - **Money**: integer cents everywhere. No floats. The `Money` VO lives in
   `apps/api/src/billing/domain`; the wire shape is `MoneyDTO` in
-  `@mercadonow/shared`. Format decimals only at presentation.
+  `@mercadonow/shared`. Format decimals only at the HTTP adapter.
 - **Errors**: domain/application throw **typed exception classes**
   (`OrderNotFoundError`, etc.). A single NestJS exception filter maps them to
   HTTP. Domain never imports NestJS. Do not use `Result<T, E>`.
@@ -117,6 +118,8 @@ Do not chain multiple MVP stages without a review/checkpoint in between.
 
 ## Environment
 
-Copy `.env.example` → `.env`. Loaded by `apps/api` via `@nestjs/config`
-(`ConfigModule.forRoot` is global). `DATABASE_URL` points at the docker-compose
-PostgreSQL. `apps/web` reads `NEXT_PUBLIC_API_URL`.
+Copy `.env.example` → `.env` and replace every `replace_with_*` placeholder.
+Never put usable credentials in `.env.example`. Docker Compose reads its
+PostgreSQL user, password and database from `.env`; `DATABASE_URL` must use the
+same values. The API loads it via `@nestjs/config` (`ConfigModule.forRoot` is
+global). `apps/web` reads `NEXT_PUBLIC_API_URL`.

@@ -1,45 +1,50 @@
 import { asId } from "@mercadonow/shared";
-import { Pool } from "pg";
+import type { DataSource } from "typeorm";
 
+import type { PaymentGateway } from "../src/billing/application/ports/payment-gateway";
+import type { PaymentIdGenerator } from "../src/billing/application/ports/payment-id-generator";
+import { CreateInvoice } from "../src/billing/application/use-cases/create-invoice.use-case";
+import { CreatePayment } from "../src/billing/application/use-cases/create-payment.use-case";
 import { Invoice } from "../src/billing/domain/entities/invoice.entity";
 import { InvoiceAlreadyExistsError } from "../src/billing/application/errors/billing-application.errors";
 import { Order } from "../src/billing/domain/entities/order.entity";
 import { Payment } from "../src/billing/domain/entities/payment.entity";
 import { Money } from "../src/billing/domain/value-objects/money";
-import { PostgresInvoiceRepository } from "../src/billing/infrastructure/persistence/postgres-invoice.repository";
-import { PostgresOrderRepository } from "../src/billing/infrastructure/persistence/postgres-order.repository";
-import { PostgresPaymentRepository } from "../src/billing/infrastructure/persistence/postgres-payment.repository";
-import { PostgresTransactionManager } from "../src/billing/infrastructure/persistence/postgres-transaction-manager";
-import { PersistenceMappingError } from "../src/billing/infrastructure/persistence/persistence-mapping.error";
-import { DatabaseService } from "../src/database/database.service";
+import { PersistenceMappingError } from "../src/billing/infrastructure/adapters/out/db/typeorm/mapper/persistence-mapping.error";
+import { TypeOrmInvoiceRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-invoice.repository";
+import { TypeOrmOrderRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-order.repository";
+import { TypeOrmPaymentRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-payment.repository";
+import { TypeOrmEntityManagerContext } from "../src/billing/infrastructure/adapters/out/db/typeorm/typeorm-entity-manager.context";
+import { TypeOrmTransactionManager } from "../src/billing/infrastructure/adapters/out/db/typeorm/typeorm-transaction.manager";
+import { createTypeOrmDataSource } from "../src/database/typeorm-data-source";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "PaymentId");
 const invoiceId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57890", "InvoiceId");
 
-describe("PostgreSQL billing repositories", () => {
-  let database: DatabaseService;
-  let orders: PostgresOrderRepository;
-  let payments: PostgresPaymentRepository;
-  let invoices: PostgresInvoiceRepository;
-  let transactions: PostgresTransactionManager;
+describe("TypeORM billing repositories", () => {
+  let dataSource: DataSource;
+  let orders: TypeOrmOrderRepository;
+  let payments: TypeOrmPaymentRepository;
+  let invoices: TypeOrmInvoiceRepository;
+  let transactions: TypeOrmTransactionManager;
 
   beforeAll(async () => {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    database = new DatabaseService(pool);
-    await database.onApplicationBootstrap();
-    orders = new PostgresOrderRepository(database);
-    payments = new PostgresPaymentRepository(database);
-    invoices = new PostgresInvoiceRepository(database);
-    transactions = new PostgresTransactionManager(database);
+    dataSource = createTypeOrmDataSource(process.env.DATABASE_URL ?? "");
+    await dataSource.initialize();
+    const context = new TypeOrmEntityManagerContext(dataSource);
+    orders = new TypeOrmOrderRepository(context);
+    payments = new TypeOrmPaymentRepository(context);
+    invoices = new TypeOrmInvoiceRepository(context);
+    transactions = new TypeOrmTransactionManager(dataSource, context);
   });
 
   beforeEach(async () => {
-    await database.query("TRUNCATE invoices, payments, order_items, orders CASCADE");
+    await dataSource.query("TRUNCATE invoices, payments, order_items, orders CASCADE");
   });
 
   afterAll(async () => {
-    await database.onApplicationShutdown();
+    await dataSource.destroy();
   });
 
   it("round-trips the complete billing aggregate data", async () => {
@@ -169,9 +174,84 @@ describe("PostgreSQL billing repositories", () => {
     ).rejects.toBeInstanceOf(InvoiceAlreadyExistsError);
   });
 
+  it("concurrent invoice requests return one stable invoice", async () => {
+    const order = makeOrder();
+    const payment = Payment.create({ id: paymentId, orderId, amount: order.total });
+    payment.authorize("provider-concurrent-invoice");
+    await orders.save(order);
+    await payments.save(payment);
+
+    const first = new CreateInvoice(
+      orders,
+      payments,
+      invoices,
+      transactions,
+      { generate: () => invoiceId },
+    );
+    const secondInvoiceId = asId(
+      "0198f5ef-b5bd-7c86-a7b2-bc32c5c57891",
+      "InvoiceId",
+    );
+    const second = new CreateInvoice(
+      orders,
+      payments,
+      invoices,
+      transactions,
+      { generate: () => secondInvoiceId },
+    );
+
+    const results = await Promise.all([
+      first.execute({ orderId, paymentId }),
+      second.execute({ orderId, paymentId }),
+    ]);
+
+    expect(results[0]).toEqual(results[1]);
+    const count = await dataSource.query<Array<{ count: string }>>(
+      "SELECT count(*) FROM invoices WHERE payment_id = $1",
+      [paymentId],
+    );
+    expect(count[0]?.count).toBe("1");
+  });
+
+  it("concurrent payment requests share one logical gateway charge", async () => {
+    await orders.save(makeOrder());
+    const firstPaymentId = paymentId;
+    const secondPaymentId = asId(
+      "0198f5ef-b5bd-7c86-a7b2-bc32c5c57894",
+      "PaymentId",
+    );
+    const gatewayPaymentIds: string[] = [];
+    const gateway: PaymentGateway = {
+      authorize: async (input) => {
+        gatewayPaymentIds.push(input.paymentId);
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return {
+          authorized: true,
+          providerReference: `provider-${input.paymentId}`,
+        };
+      },
+    };
+    const makeUseCase = (ids: PaymentIdGenerator) =>
+      new CreatePayment(orders, payments, transactions, ids, gateway);
+
+    const results = await Promise.all([
+      makeUseCase({ generate: () => firstPaymentId }).execute({ orderId }),
+      makeUseCase({ generate: () => secondPaymentId }).execute({ orderId }),
+    ]);
+
+    expect(results[0]).toEqual(results[1]);
+    expect(new Set(gatewayPaymentIds).size).toBe(1);
+    const activePayments = await dataSource.query<Array<{ count: string }>>(
+      `SELECT count(*) FROM payments
+         WHERE order_id = $1 AND status IN ('PENDING', 'AUTHORIZED')`,
+      [orderId],
+    );
+    expect(activePayments[0]?.count).toBe("1");
+  });
+
   it("rejects an order whose stored total disagrees with its items", async () => {
     await orders.save(makeOrder());
-    await database.query("UPDATE orders SET total_amount = 1 WHERE id = $1", [
+    await dataSource.query("UPDATE orders SET total_amount = 1 WHERE id = $1", [
       orderId,
     ]);
 
@@ -183,7 +263,7 @@ describe("PostgreSQL billing repositories", () => {
   });
 
   it("distinguishes a corrupted order without items from a missing order", async () => {
-    await database.query(
+    await dataSource.query(
       `INSERT INTO orders
          (id, customer_id, merchant_id, delivery_address, status,
           total_amount, currency)
@@ -203,7 +283,7 @@ describe("PostgreSQL billing repositories", () => {
   });
 
   it("rejects persisted money outside the JavaScript safe integer range", async () => {
-    await database.query(
+    await dataSource.query(
       `INSERT INTO orders
          (id, customer_id, merchant_id, delivery_address, status,
           total_amount, currency)
@@ -215,7 +295,7 @@ describe("PostgreSQL billing repositories", () => {
         "9007199254740992",
       ],
     );
-    await database.query(
+    await dataSource.query(
       `INSERT INTO order_items
          (order_id, position, product_id, quantity, unit_price_amount, currency)
        VALUES ($1, 0, 'product-unsafe', 1, $2, 'ARS')`,
@@ -229,7 +309,7 @@ describe("PostgreSQL billing repositories", () => {
 
   it("wraps invalid persisted aggregate state with repository context", async () => {
     await orders.save(makeOrder());
-    await database.query(
+    await dataSource.query(
       `INSERT INTO payments
          (id, order_id, amount, currency, status, provider_reference)
        VALUES ($1, $2, 3000, 'ARS', 'AUTHORIZED', NULL)`,

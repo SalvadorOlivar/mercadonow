@@ -9,13 +9,8 @@ const DOMAIN_OUTER_LAYERS = [
   "../../infrastructure/**",
   "../../../infrastructure/**",
   "../../../../infrastructure/**",
-  "../presentation/**",
-  "../../presentation/**",
-  "../../../presentation/**",
-  "../../../../presentation/**",
   "@/billing/application/**",
   "@/billing/infrastructure/**",
-  "@/billing/presentation/**",
 ];
 
 const APPLICATION_OUTER_LAYERS = [
@@ -23,20 +18,27 @@ const APPLICATION_OUTER_LAYERS = [
   "../../infrastructure/**",
   "../../../infrastructure/**",
   "../../../../infrastructure/**",
-  "../presentation/**",
-  "../../presentation/**",
-  "../../../presentation/**",
-  "../../../../presentation/**",
   "@/billing/infrastructure/**",
-  "@/billing/presentation/**",
 ];
 
-const PRESENTATION_IMPORTS = [
-  "../presentation/**",
-  "../../presentation/**",
-  "../../../presentation/**",
-  "../../../../presentation/**",
-  "@/billing/presentation/**",
+const INBOUND_ADAPTER_IMPORTS = [
+  "../in/**",
+  "../../in/**",
+  "../../../in/**",
+  "../../../../in/**",
+  "../../../../../in/**",
+  "../../../../../../in/**",
+  "@/billing/infrastructure/adapters/in/**",
+];
+
+const OUTBOUND_ADAPTER_IMPORTS = [
+  "../out/**",
+  "../../out/**",
+  "../../../out/**",
+  "../../../../out/**",
+  "../../../../../out/**",
+  "../../../../../../out/**",
+  "@/billing/infrastructure/adapters/out/**",
 ];
 
 export default tseslint.config(
@@ -87,15 +89,31 @@ export default tseslint.config(
     },
   },
   {
-    files: ["apps/api/src/billing/infrastructure/**/*.ts"],
+    files: ["apps/api/src/billing/infrastructure/adapters/out/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: PRESENTATION_IMPORTS,
-              message: "Infrastructure cannot depend on the presentation layer.",
+              group: INBOUND_ADAPTER_IMPORTS,
+              message: "Outbound adapters cannot depend on inbound adapters.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["apps/api/src/billing/infrastructure/adapters/in/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: OUTBOUND_ADAPTER_IMPORTS,
+              message: "Inbound adapters cannot depend on outbound adapters.",
             },
           ],
         },

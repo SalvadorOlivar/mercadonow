@@ -54,3 +54,15 @@ export class InvoiceAlreadyExistsError extends BillingError {
     this.name = "InvoiceAlreadyExistsError";
   }
 }
+
+/**
+ * Internal application signal used to recover a concurrent payment claim.
+ * It is expected to be caught by CreatePayment and must not cross the HTTP
+ * boundary.
+ */
+export class ActivePaymentAlreadyExistsError extends Error {
+  constructor(orderId: OrderId) {
+    super(`An active payment already exists for order ${orderId}`);
+    this.name = "ActivePaymentAlreadyExistsError";
+  }
+}

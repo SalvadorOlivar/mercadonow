@@ -4,6 +4,9 @@
 - Date: 2026-08-04
 - Scope: whole monorepo
 
+> ADR-006 replaces the top-level `presentation` layer with an inbound HTTP
+> adapter. The inward dependency rule remains unchanged.
+
 ## Context
 
 MercadoNow starts as a Billing MVP with a Node.js/NestJS backend, Next.js frontend,
