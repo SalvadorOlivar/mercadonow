@@ -21,6 +21,11 @@ Completado:
 - #23 `CreatePayment`, incluyendo procesamiento mediante un gateway y reintentos.
 - #24 `CreateInvoice` para pagos autorizados.
 - #25 `GetInvoice` con salida serializable y error tipado.
+- #33 contratos públicos de Billing compartidos por API y frontend.
+- #35 política central de validación de entrada.
+- #36 taxonomía exhaustiva de errores esperados.
+- #41 configuración de runtime validada y CORS restringido.
+- #34 OpenAPI generado y verificado desde los DTOs reales.
 - `Money`, errores de dominio y puertos `OrderRepository`,
   `PaymentRepository` e `InvoiceRepository`.
 - Adaptadores PostgreSQL para órdenes, pagos y facturas, con un transaction

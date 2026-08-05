@@ -3,6 +3,6 @@ packages:
   - "packages/*"
 
 allowBuilds:
-  "@nestjs/core@11.0.0": true
+  "@nestjs/core@11.0.1": true
   "sharp@0.34.5": true
   "unrs-resolver@1.12.2": true

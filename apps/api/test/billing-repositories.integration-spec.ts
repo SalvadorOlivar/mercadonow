@@ -2,6 +2,7 @@ import { asId } from "@mercadonow/shared";
 import { Pool } from "pg";
 
 import { Invoice } from "../src/billing/domain/entities/invoice.entity";
+import { InvoiceAlreadyExistsError } from "../src/billing/application/errors/billing-application.errors";
 import { Order } from "../src/billing/domain/entities/order.entity";
 import { Payment } from "../src/billing/domain/entities/payment.entity";
 import { Money } from "../src/billing/domain/value-objects/money";
@@ -165,7 +166,7 @@ describe("PostgreSQL billing repositories", () => {
           total: payment.amount,
         }),
       ),
-    ).rejects.toMatchObject({ code: "23505" });
+    ).rejects.toBeInstanceOf(InvoiceAlreadyExistsError);
   });
 
   it("rejects an order whose stored total disagrees with its items", async () => {

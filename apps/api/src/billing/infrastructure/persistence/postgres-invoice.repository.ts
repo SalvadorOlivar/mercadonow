@@ -7,6 +7,7 @@ import type {
 import { INVOICE_STATUSES } from "@mercadonow/shared";
 
 import { DatabaseService } from "../../../database/database.service";
+import { InvoiceAlreadyExistsError } from "../../application/errors/billing-application.errors";
 import { Invoice } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
 import { Money } from "../../domain/value-objects/money";
@@ -57,26 +58,33 @@ export class PostgresInvoiceRepository implements InvoiceRepository {
   }
 
   async save(invoice: Invoice): Promise<void> {
-    await this.database.query(
-      `INSERT INTO invoices
-         (id, order_id, payment_id, total_amount, currency, status)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (id) DO UPDATE SET
-         order_id = EXCLUDED.order_id,
-         payment_id = EXCLUDED.payment_id,
-         total_amount = EXCLUDED.total_amount,
-         currency = EXCLUDED.currency,
-         status = EXCLUDED.status,
-         updated_at = now()`,
-      [
-        invoice.id,
-        invoice.orderId,
-        invoice.paymentId,
-        invoice.total.amount,
-        invoice.total.currency,
-        invoice.status,
-      ],
-    );
+    try {
+      await this.database.query(
+        `INSERT INTO invoices
+           (id, order_id, payment_id, total_amount, currency, status)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (id) DO UPDATE SET
+           order_id = EXCLUDED.order_id,
+           payment_id = EXCLUDED.payment_id,
+           total_amount = EXCLUDED.total_amount,
+           currency = EXCLUDED.currency,
+           status = EXCLUDED.status,
+           updated_at = now()`,
+        [
+          invoice.id,
+          invoice.orderId,
+          invoice.paymentId,
+          invoice.total.amount,
+          invoice.total.currency,
+          invoice.status,
+        ],
+      );
+    } catch (error) {
+      if (isInvoicePaymentConflict(error)) {
+        throw new InvoiceAlreadyExistsError(invoice.paymentId);
+      }
+      throw error;
+    }
   }
 
   private toDomain(row: InvoiceRow): Invoice {
@@ -112,4 +120,13 @@ export class PostgresInvoiceRepository implements InvoiceRepository {
       }),
     );
   }
+}
+
+function isInvoicePaymentConflict(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const postgresError = error as { code?: unknown; constraint?: unknown };
+  return (
+    postgresError.code === "23505" &&
+    postgresError.constraint === "invoices_payment_id_key"
+  );
 }

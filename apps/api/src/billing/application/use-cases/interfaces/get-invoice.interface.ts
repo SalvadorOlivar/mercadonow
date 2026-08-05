@@ -1,19 +1,11 @@
 import type {
+  GetInvoiceRequest,
+  GetInvoiceResponse,
   InvoiceId,
-  InvoiceStatus,
-  MoneyDTO,
-  OrderId,
-  PaymentId,
 } from "@mercadonow/shared";
 
-export interface GetInvoiceInput {
+export interface GetInvoiceInput extends GetInvoiceRequest {
   readonly invoiceId: InvoiceId;
 }
 
-export interface GetInvoiceOutput {
-  readonly invoiceId: InvoiceId;
-  readonly orderId: OrderId;
-  readonly paymentId: PaymentId;
-  readonly status: InvoiceStatus;
-  readonly total: MoneyDTO;
-}
+export type GetInvoiceOutput = GetInvoiceResponse;

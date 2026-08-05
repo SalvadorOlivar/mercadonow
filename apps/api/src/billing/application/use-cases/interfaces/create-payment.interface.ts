@@ -1,18 +1,11 @@
 import type {
-  MoneyDTO,
+  CreatePaymentRequest,
+  CreatePaymentResponse,
   OrderId,
-  PaymentId,
-  PaymentStatus,
 } from "@mercadonow/shared";
 
-export interface CreatePaymentInput {
+export interface CreatePaymentInput extends CreatePaymentRequest {
   readonly orderId: OrderId;
 }
 
-export interface CreatePaymentOutput {
-  readonly paymentId: PaymentId;
-  readonly orderId: OrderId;
-  readonly status: PaymentStatus;
-  readonly amount: MoneyDTO;
-  readonly providerReference?: string;
-}
+export type CreatePaymentOutput = CreatePaymentResponse;

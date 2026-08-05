@@ -1,4 +1,4 @@
-import { asId } from "@mercadonow/shared";
+import { asId, BILLING_CONTRACT_LIMITS } from "@mercadonow/shared";
 
 import { DomainValidationError } from "../../errors/domain-validation.error";
 import { InvalidStateTransitionError } from "../../errors/invalid-state-transition.error";
@@ -70,6 +70,89 @@ describe("Order", () => {
           deliveryAddress: "Address",
           items: [],
         }),
+    ).toThrow(DomainValidationError);
+  });
+
+  it.each([
+    ["a whitespace-only delivery address", "   ", "product-1"],
+    ["a whitespace-only product ID", "Address", "   "],
+  ])("rejects %s", (_name, deliveryAddress, productId) => {
+    expect(() =>
+      Order.create({
+        id: asId("0198-order", "OrderId"),
+        customerId: asId("0198-customer", "CustomerId"),
+        merchantId: asId("0198-merchant", "MerchantId"),
+        deliveryAddress,
+        items: [
+          {
+            productId,
+            quantity: 1,
+            unitPrice: new Money(100, "ARS"),
+          },
+        ],
+      }),
+    ).toThrow(DomainValidationError);
+  });
+
+  it.each([
+    {
+      name: "too many items",
+      deliveryAddress: "Address",
+      items: Array.from(
+        { length: BILLING_CONTRACT_LIMITS.orderItemsMax + 1 },
+        () => ({
+          productId: "product-1",
+          quantity: 1,
+          unitPrice: new Money(100, "ARS"),
+        }),
+      ),
+    },
+    {
+      name: "an overlong delivery address",
+      deliveryAddress: "a".repeat(
+        BILLING_CONTRACT_LIMITS.deliveryAddressMaxLength + 1,
+      ),
+      items: [
+        {
+          productId: "product-1",
+          quantity: 1,
+          unitPrice: new Money(100, "ARS"),
+        },
+      ],
+    },
+    {
+      name: "an overlong product ID",
+      deliveryAddress: "Address",
+      items: [
+        {
+          productId: "p".repeat(
+            BILLING_CONTRACT_LIMITS.productIdMaxLength + 1,
+          ),
+          quantity: 1,
+          unitPrice: new Money(100, "ARS"),
+        },
+      ],
+    },
+    {
+      name: "a quantity outside the persistence range",
+      deliveryAddress: "Address",
+      items: [
+        {
+          productId: "product-1",
+          quantity: BILLING_CONTRACT_LIMITS.quantityMax + 1,
+          unitPrice: new Money(100, "ARS"),
+        },
+      ],
+    },
+  ])("rejects $name without going through HTTP", ({ deliveryAddress, items }) => {
+    expect(() =>
+      Order.create({
+        id: asId("0198-order", "OrderId"),
+        customerId: asId("0198-customer", "CustomerId"),
+        merchantId: asId("0198-merchant", "MerchantId"),
+        deliveryAddress,
+        items,
+      }),
     ).toThrow(DomainValidationError);
   });
 

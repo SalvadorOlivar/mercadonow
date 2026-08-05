@@ -1,26 +1,16 @@
 import type {
+  BrandedCreateOrderRequest,
+  CreateOrderItemRequest,
+  CreateOrderResponse,
   CustomerId,
   MerchantId,
-  MoneyDTO,
-  OrderId,
-  OrderStatus,
 } from "@mercadonow/shared";
 
-export interface CreateOrderItemInput {
-  readonly productId: string;
-  readonly quantity: number;
-  readonly unitPrice: MoneyDTO;
-}
+export type CreateOrderItemInput = CreateOrderItemRequest;
 
-export interface CreateOrderInput {
+export interface CreateOrderInput extends BrandedCreateOrderRequest {
   readonly customerId: CustomerId;
   readonly merchantId: MerchantId;
-  readonly deliveryAddress: string;
-  readonly items: readonly CreateOrderItemInput[];
 }
 
-export interface CreateOrderOutput {
-  readonly orderId: OrderId;
-  readonly status: OrderStatus;
-  readonly total: MoneyDTO;
-}
+export type CreateOrderOutput = CreateOrderResponse;

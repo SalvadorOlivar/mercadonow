@@ -8,7 +8,9 @@
  * shape so FE and BE agree on the contract.
  */
 
-export type Currency = "ARS" | "USD" | "EUR";
+export const CURRENCIES = ["ARS", "USD", "EUR"] as const;
+
+export type Currency = (typeof CURRENCIES)[number];
 
 export interface MoneyDTO {
   /** Amount in the smallest currency unit (e.g. cents). Always an integer. */
@@ -21,7 +23,8 @@ export function isMoneyDTO(v: unknown): v is MoneyDTO {
   const m = v as Record<string, unknown>;
   return (
     typeof m.amount === "number" &&
-    Number.isInteger(m.amount) &&
-    (m.currency === "ARS" || m.currency === "USD" || m.currency === "EUR")
+    Number.isSafeInteger(m.amount) &&
+    m.amount >= 0 &&
+    CURRENCIES.some((currency) => currency === m.currency)
   );
 }

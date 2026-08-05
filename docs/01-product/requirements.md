@@ -42,3 +42,10 @@ Invoice
    │
    ▼
 Refund
+
+## Public HTTP contract
+
+The four Billing MVP operations, validation limits, stable error envelope and
+breaking-change policy are specified in
+[api-contract.md](./api-contract.md). The generated OpenAPI document is the
+machine-readable view of that contract, not an independent source of truth.

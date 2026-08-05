@@ -13,6 +13,7 @@ export * from "./entities/interfaces/order.interface";
 export * from "./entities/interfaces/payment.interface";
 export * from "./errors/domain-validation.error";
 export * from "./errors/invalid-state-transition.error";
+export * from "./errors/billing.error";
 export * from "./repositories/invoice.repository";
 export * from "./repositories/order.repository";
 export * from "./repositories/payment.repository";

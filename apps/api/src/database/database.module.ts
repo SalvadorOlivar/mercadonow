@@ -4,6 +4,7 @@ import { Pool } from "pg";
 
 import { POSTGRES_POOL } from "./database.constants";
 import { DatabaseService } from "./database.service";
+import type { EnvironmentVariables } from "../config/environment";
 
 @Global()
 @Module({
@@ -11,12 +12,10 @@ import { DatabaseService } from "./database.service";
     {
       provide: POSTGRES_POOL,
       inject: [ConfigService],
-      useFactory: (config: ConfigService): Pool => {
-        const connectionString = config.get<string>("DATABASE_URL");
-        if (connectionString === undefined || connectionString.length === 0) {
-          throw new Error("DATABASE_URL is required");
-        }
-
+      useFactory: (config: ConfigService<EnvironmentVariables>): Pool => {
+        const connectionString = config.getOrThrow("DATABASE_URL", {
+          infer: true,
+        });
         return new Pool({ connectionString });
       },
     },
@@ -25,4 +24,3 @@ import { DatabaseService } from "./database.service";
   exports: [POSTGRES_POOL, DatabaseService],
 })
 export class DatabaseModule {}
-

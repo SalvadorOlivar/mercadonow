@@ -12,8 +12,7 @@
  * infrastructure -> application/domain to implement outbound ports.
  * BillingModule is the composition root and may import every layer.
  */
-import { Module, ValidationPipe } from "@nestjs/common";
-import { APP_FILTER, APP_PIPE } from "@nestjs/core";
+import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { CreateInvoice } from "./application/use-cases/create-invoice.use-case";
 import { CreateOrder } from "./application/use-cases/create-order.use-case";
@@ -39,7 +38,6 @@ import { UuidV7InvoiceIdGenerator } from "./infrastructure/ids/uuid-v7-invoice-i
 import { UuidV7OrderIdGenerator } from "./infrastructure/ids/uuid-v7-order-id-generator";
 import { UuidV7PaymentIdGenerator } from "./infrastructure/ids/uuid-v7-payment-id-generator";
 import { BillingController } from "./presentation/billing.controller";
-import { BillingExceptionFilter } from "./presentation/billing-exception.filter";
 import type { InvoiceRepository } from "./domain/repositories/invoice.repository";
 import type { OrderRepository } from "./domain/repositories/order.repository";
 import type { PaymentRepository } from "./domain/repositories/payment.repository";
@@ -104,15 +102,6 @@ import type { PaymentRepository } from "./domain/repositories/payment.repository
       inject: [INVOICE_REPOSITORY],
       useFactory: (invoices: InvoiceRepository) => new GetInvoice(invoices),
     },
-    {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    },
-    { provide: APP_FILTER, useClass: BillingExceptionFilter },
   ],
   exports: [
     ORDER_REPOSITORY,

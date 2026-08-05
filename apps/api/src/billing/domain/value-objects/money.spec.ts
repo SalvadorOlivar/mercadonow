@@ -9,6 +9,9 @@ describe("Money", () => {
   it("rejects decimals and negative amounts", () => {
     expect(() => new Money(1.5, "USD")).toThrow(DomainValidationError);
     expect(() => new Money(-1, "USD")).toThrow(DomainValidationError);
+    expect(() => new Money(Number.MAX_SAFE_INTEGER + 1, "USD")).toThrow(
+      DomainValidationError,
+    );
   });
 
   it("rejects operations between currencies", () => {
