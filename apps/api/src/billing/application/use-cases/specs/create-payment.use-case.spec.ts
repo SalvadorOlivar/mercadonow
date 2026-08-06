@@ -2,8 +2,8 @@ import { asId } from "@mercadonow/shared";
 
 import { Order } from "../../../domain/order";
 import { Payment } from "../../../domain/payment";
-import type { OrderRepositoryPort } from "../../ports/out/order-repository";
-import type { PaymentRepositoryPort } from "../../ports/out/payment-repository";
+import type { OrderPort } from "../../ports/out/order-repository";
+import type { PaymentPort } from "../../ports/out/payment-repository";
 import { Money } from "../../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
@@ -52,11 +52,11 @@ const setup = (options?: {
   authorized?: boolean;
 }) => {
   const order = options?.order === undefined ? makeOrder() : options.order;
-  const orderRepository: jest.Mocked<OrderRepositoryPort> = {
+  const orderRepository: jest.Mocked<OrderPort> = {
     findById: jest.fn().mockResolvedValue(order),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const paymentRepository: jest.Mocked<PaymentRepositoryPort> = {
+  const paymentRepository: jest.Mocked<PaymentPort> = {
     findById: jest.fn().mockResolvedValue(null),
     findByOrderId: jest.fn().mockResolvedValue(options?.payments ?? []),
     save: jest.fn().mockResolvedValue(undefined),

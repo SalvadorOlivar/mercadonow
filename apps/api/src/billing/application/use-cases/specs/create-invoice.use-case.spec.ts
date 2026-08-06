@@ -3,9 +3,9 @@ import { asId } from "@mercadonow/shared";
 import { Invoice } from "../../../domain/invoice";
 import { Order } from "../../../domain/order";
 import { Payment } from "../../../domain/payment";
-import type { InvoiceRepositoryPort } from "../../ports/out/invoice-repository";
-import type { OrderRepositoryPort } from "../../ports/out/order-repository";
-import type { PaymentRepositoryPort } from "../../ports/out/payment-repository";
+import type { InvoicePort } from "../../ports/out/invoice.port";
+import type { OrderPort } from "../../ports/out/order-repository";
+import type { PaymentPort } from "../../ports/out/payment-repository";
 import { Money } from "../../../domain/value-objects/money";
 import {
   InvoiceAlreadyExistsError,
@@ -55,18 +55,18 @@ const setup = (options?: {
   payment?: Payment | null;
   existingInvoice?: Invoice | null;
 }) => {
-  const orderRepository: jest.Mocked<OrderRepositoryPort> = {
+  const orderRepository: jest.Mocked<OrderPort> = {
     findById: jest.fn().mockResolvedValue(options?.order === undefined ? makeOrder() : options.order),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const paymentRepository: jest.Mocked<PaymentRepositoryPort> = {
+  const paymentRepository: jest.Mocked<PaymentPort> = {
     findById: jest.fn().mockResolvedValue(
       options?.payment === undefined ? makePayment() : options.payment,
     ),
     findByOrderId: jest.fn().mockResolvedValue([]),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const invoiceRepository: jest.Mocked<InvoiceRepositoryPort> = {
+  const invoiceRepository: jest.Mocked<InvoicePort> = {
     findById: jest.fn().mockResolvedValue(null),
     findByOrderId: jest.fn().mockResolvedValue(null),
     findByPaymentId: jest.fn().mockResolvedValue(options?.existingInvoice ?? null),

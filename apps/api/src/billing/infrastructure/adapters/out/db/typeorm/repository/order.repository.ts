@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { OrderId } from "@mercadonow/shared";
 
-import type { OrderRepositoryPort } from "../../../../../../application/ports/out/order-repository";
+import type { OrderPort } from "../../../../../../application/ports/out/order-repository";
 import type { Order } from "../../../../../../domain/order";
 import { OrderItemEntity } from "../entity/order-item.entity";
 import { OrderEntity } from "../entity/order.entity";
@@ -9,7 +9,7 @@ import { OrderMapper } from "../mapper/order.mapper";
 import { EntityManagerContext } from "../entity-manager.context";
 
 @Injectable()
-export class OrderRepository implements OrderRepositoryPort {
+export class OrderRepository implements OrderPort {
   constructor(private readonly context: EntityManagerContext) {}
 
   async findById(id: OrderId): Promise<Order | null> {

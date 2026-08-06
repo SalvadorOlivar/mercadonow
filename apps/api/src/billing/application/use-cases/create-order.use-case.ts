@@ -1,5 +1,5 @@
 import { Order } from "../../domain/order";
-import type { OrderRepositoryPort } from "../ports/out/order-repository";
+import type { OrderPort } from "../ports/out/order-repository";
 import { Money } from "../../domain/value-objects/money";
 import type { OrderIdGenerator } from "../ports/out/order-id-generator";
 import type { TransactionManagerPort } from "../ports/out/transaction-manager";
@@ -10,7 +10,7 @@ import type {
 
 export class CreateOrder {
   constructor(
-    private readonly orderRepositoryPort: OrderRepositoryPort,
+    private readonly OrderPort: OrderPort,
     private readonly transactionManagerPort: TransactionManagerPort,
     private readonly orderIdGenerator: OrderIdGenerator,
   ) {}
@@ -29,7 +29,7 @@ export class CreateOrder {
         })),
       });
 
-      await this.orderRepositoryPort.save(order);
+      await this.OrderPort.save(order);
 
       return {
         orderId: order.id,

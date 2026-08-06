@@ -2,7 +2,7 @@ import { asId } from "@mercadonow/shared";
 
 import { DomainValidationError } from "../../../domain/errors/domain-validation.error";
 import type { Order } from "../../../domain/order";
-import type { OrderRepositoryPort } from "../../ports/out/order-repository";
+import type { OrderPort } from "../../ports/out/order-repository";
 import type { TransactionManagerPort } from "../../ports/out/transaction-manager";
 import type { OrderIdGenerator } from "../../ports/out/order-id-generator";
 import { CreateOrder } from "../create-order.use-case";
@@ -23,7 +23,7 @@ class TestTransactionManager implements TransactionManagerPort {
   }
 }
 
-class InMemoryOrderRepository implements OrderRepositoryPort {
+class InMemoryOrderRepository implements OrderPort {
   readonly saved: Order[] = [];
   savedInsideTransaction = false;
 

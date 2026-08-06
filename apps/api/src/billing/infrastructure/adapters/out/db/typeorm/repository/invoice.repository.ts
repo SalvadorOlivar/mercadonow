@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type { InvoiceId, OrderId, PaymentId } from "@mercadonow/shared";
 
 import { InvoiceAlreadyExistsError } from "../../../../../../application/errors/billing-application.errors";
-import type { InvoiceRepositoryPort } from "../../../../../../application/ports/out/invoice-repository";
+import type { InvoicePort } from "../../../../../../application/ports/out/invoice.port";
 import type { Invoice } from "../../../../../../domain/invoice";
 import { InvoiceEntity } from "../entity/invoice.entity";
 import { InvoiceMapper } from "../mapper/invoice.mapper";
@@ -10,7 +10,7 @@ import { EntityManagerContext } from "../entity-manager.context";
 import { isPostgresConstraintViolation } from "./query-error";
 
 @Injectable()
-export class InvoiceRepository implements InvoiceRepositoryPort {
+export class InvoiceRepository implements InvoicePort {
   constructor(private readonly context: EntityManagerContext) {}
 
   async findById(id: InvoiceId): Promise<Invoice | null> {

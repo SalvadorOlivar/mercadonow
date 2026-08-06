@@ -1,7 +1,7 @@
 import { asId } from "@mercadonow/shared";
 
 import { Invoice } from "../../../domain/invoice";
-import type { InvoiceRepositoryPort } from "../../ports/out/invoice-repository";
+import type { InvoicePort } from "../../ports/out/invoice.port";
 import { Money } from "../../../domain/value-objects/money";
 import { InvoiceNotFoundError } from "../../errors/billing-application.errors";
 import { GetInvoice } from "../get-invoice.use-case";
@@ -10,7 +10,7 @@ const invoiceId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "InvoiceId");
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57890", "PaymentId");
 
-const repositoryWith = (invoice: Invoice | null): InvoiceRepositoryPort => ({
+const repositoryWith = (invoice: Invoice | null): InvoicePort => ({
   findById: jest.fn().mockResolvedValue(invoice),
   findByOrderId: jest.fn().mockResolvedValue(null),
   findByPaymentId: jest.fn().mockResolvedValue(null),

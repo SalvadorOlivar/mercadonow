@@ -1,4 +1,4 @@
-import type { InvoiceRepositoryPort } from "../ports/out/invoice-repository";
+import type { InvoicePort } from "../ports/out/invoice.port";
 import { InvoiceNotFoundError } from "../errors/billing-application.errors";
 import type {
   GetInvoiceInput,
@@ -6,7 +6,7 @@ import type {
 } from "./interfaces/get-invoice.interface";
 
 export class GetInvoice {
-  constructor(private readonly invoiceRepository: InvoiceRepositoryPort) {}
+  constructor(private readonly invoiceRepository: InvoicePort) {}
 
   async execute(input: GetInvoiceInput): Promise<GetInvoiceOutput> {
     const invoice = await this.invoiceRepository.findById(input.invoiceId);

@@ -4,7 +4,7 @@ import type { Order } from "../../../domain/order";
 
 export const ORDER_REPOSITORY = Symbol("ORDER_REPOSITORY");
 
-export interface OrderRepositoryPort {
+export interface OrderPort {
   findById(id: OrderId): Promise<Order | null>;
   save(order: Order): Promise<void>;
 }

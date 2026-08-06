@@ -1,8 +1,8 @@
 import type { OrderId } from "@mercadonow/shared";
 
 import { Payment } from "../../domain/payment";
-import type { OrderRepositoryPort } from "../ports/out/order-repository";
-import type { PaymentRepositoryPort } from "../ports/out/payment-repository";
+import type { OrderPort } from "../ports/out/order-repository";
+import type { PaymentPort } from "../ports/out/payment-repository";
 import type { Money } from "../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
@@ -18,15 +18,15 @@ import type {
 
 export class CreatePayment {
   constructor(
-    private readonly OrderRepositoryPort: OrderRepositoryPort,
-    private readonly paymentRepositoryPort: PaymentRepositoryPort,
+    private readonly OrderPort: OrderPort,
+    private readonly PaymentPort: PaymentPort,
     private readonly transactionManagerPort: TransactionManagerPort,
     private readonly paymentIdGenerator: PaymentIdGenerator,
     private readonly paymentGateway: PaymentGateway,
   ) {}
 
   async execute(input: CreatePaymentInput): Promise<CreatePaymentOutput> {
-    const order = await this.OrderRepositoryPort.findById(input.orderId);
+    const order = await this.OrderPort.findById(input.orderId);
     if (order === null) throw new OrderNotFoundError(input.orderId);
 
     const payment = await this.claimPayment(order.id, order.total);
@@ -40,15 +40,15 @@ export class CreatePayment {
 
     if (!result.authorized) {
       payment.fail();
-      await this.transactionManagerPort.run(() => this.paymentRepositoryPort.save(payment));
+      await this.transactionManagerPort.run(() => this.PaymentPort.save(payment));
       return this.toOutput(payment);
     }
 
     payment.authorize(result.providerReference);
     order.markPaid();
     await this.transactionManagerPort.run(async () => {
-      await this.paymentRepositoryPort.save(payment);
-      await this.OrderRepositoryPort.save(order);
+      await this.PaymentPort.save(payment);
+      await this.OrderPort.save(order);
     });
 
     return this.toOutput(payment);
@@ -59,7 +59,7 @@ export class CreatePayment {
     amount: Money,
   ): Promise<Payment> {
     while (true) {
-      const previousPayments = await this.paymentRepositoryPort.findByOrderId(orderId);
+      const previousPayments = await this.PaymentPort.findByOrderId(orderId);
       const authorized = previousPayments.find(
         (payment) => payment.status === "AUTHORIZED",
       );
@@ -78,7 +78,7 @@ export class CreatePayment {
 
       try {
         await this.transactionManagerPort.run(() =>
-          this.paymentRepositoryPort.save(payment),
+          this.PaymentPort.save(payment),
         );
         return payment;
       } catch (error) {
