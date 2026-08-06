@@ -1,8 +1,8 @@
 import { asId } from "@mercadonow/shared";
 import type { DataSource } from "typeorm";
 
-import type { PaymentGateway } from "../src/billing/application/ports/payment-gateway";
-import type { PaymentIdGenerator } from "../src/billing/application/ports/payment-id-generator";
+import type { PaymentGateway } from "../src/billing/application/ports/out/payment-gateway";
+import type { PaymentIdGenerator } from "../src/billing/application/ports/out/payment-id-generator";
 import { CreateInvoice } from "../src/billing/application/use-cases/create-invoice.use-case";
 import { CreatePayment } from "../src/billing/application/use-cases/create-payment.use-case";
 import { Invoice } from "../src/billing/domain/invoice";
@@ -11,12 +11,12 @@ import { Order } from "../src/billing/domain/order";
 import { Payment } from "../src/billing/domain/payment";
 import { Money } from "../src/billing/domain/value-objects/money";
 import { PersistenceMappingError } from "../src/billing/infrastructure/adapters/out/db/typeorm/mapper/persistence-mapping.error";
-import { TypeOrmInvoiceRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-invoice.repository";
-import { OrderRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-order.repository";
-import { TypeOrmPaymentRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/typeorm-payment.repository";
-import { TypeOrmEntityManagerContext } from "../src/billing/infrastructure/adapters/out/db/typeorm/typeorm-entity-manager.context";
-import { TypeOrmTransactionManager } from "../src/billing/infrastructure/adapters/out/db/typeorm/typeorm-transaction.manager";
-import { createTypeOrmDataSource } from "../src/database/typeorm-data-source";
+import { InvoiceRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/invoice.repository";
+import { OrderRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/order.repository";
+import { PaymentRepository } from "../src/billing/infrastructure/adapters/out/db/typeorm/repository/payment.repository";
+import { EntityManagerContext } from "../src/billing/infrastructure/adapters/out/db/typeorm/entity-manager.context";
+import { TransactionManager } from "../src/billing/infrastructure/adapters/out/db/typeorm/transaction.manager";
+import { createPostgresqlDataSource } from "../src/config/database/postgresql/postgresql-data.source";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 const paymentId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57889", "PaymentId");
@@ -25,18 +25,18 @@ const invoiceId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57890", "InvoiceId");
 describe("TypeORM billing repositories", () => {
   let dataSource: DataSource;
   let orders: OrderRepository;
-  let payments: TypeOrmPaymentRepository;
-  let invoices: TypeOrmInvoiceRepository;
-  let transactions: TypeOrmTransactionManager;
+  let payments: PaymentRepository;
+  let invoices: InvoiceRepository;
+  let transactions: TransactionManager;
 
   beforeAll(async () => {
-    dataSource = createTypeOrmDataSource(process.env.DATABASE_URL ?? "");
+    dataSource = createPostgresqlDataSource(process.env.DATABASE_URL ?? "");
     await dataSource.initialize();
-    const context = new TypeOrmEntityManagerContext(dataSource);
+    const context = new EntityManagerContext(dataSource);
     orders = new OrderRepository(context);
-    payments = new TypeOrmPaymentRepository(context);
-    invoices = new TypeOrmInvoiceRepository(context);
-    transactions = new TypeOrmTransactionManager(dataSource, context);
+    payments = new PaymentRepository(context);
+    invoices = new InvoiceRepository(context);
+    transactions = new TransactionManager(dataSource, context);
   });
 
   beforeEach(async () => {

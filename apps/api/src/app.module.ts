@@ -21,16 +21,10 @@ import {
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-
-      useFactory: (
-        configService: ConfigService<EnvironmentVariables, true>,
-      ) => {
-        const databaseUrl = configService.getOrThrow('DATABASE_URL', {
-          infer: true,
-        });
-
-        return createPostgresqlDataSourceOptions(databaseUrl);
-      },
+      useFactory: (config: ConfigService<EnvironmentVariables>) =>
+        createPostgresqlDataSourceOptions(
+          config.getOrThrow('DATABASE_URL', { infer: true }),
+        ),
     }),
 
     BillingModule,

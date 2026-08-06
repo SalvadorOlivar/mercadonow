@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
 
-import { createTypeOrmDataSource } from "../src/database/typeorm-data-source";
+import { createPostgresqlDataSource } from "../src/config/database/postgresql/postgresql-data.source";
 import { resolveTestDatabaseUrl } from "./test-database-url";
 
 export default async function globalSetup(): Promise<void> {
@@ -27,7 +27,7 @@ export default async function globalSetup(): Promise<void> {
     await admin.destroy();
   }
 
-  const testDataSource = createTypeOrmDataSource(connectionString);
+  const testDataSource = createPostgresqlDataSource(connectionString);
   await testDataSource.initialize();
   try {
     await testDataSource.query("DROP SCHEMA public CASCADE");

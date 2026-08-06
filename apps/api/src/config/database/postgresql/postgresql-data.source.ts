@@ -1,4 +1,4 @@
-import type { DataSourceOptions } from 'typeorm';
+import { DataSource, type DataSourceOptions } from 'typeorm';
 
 import { POSTGRESQL_ENTITIES } from './entities/postgresql.entities';
 
@@ -16,3 +16,8 @@ export const createPostgresqlDataSourceOptions = (
     logging: false,
   };
 };
+
+export const createPostgresqlDataSource = (
+  databaseUrl: string,
+): DataSource =>
+  new DataSource(createPostgresqlDataSourceOptions(databaseUrl));
