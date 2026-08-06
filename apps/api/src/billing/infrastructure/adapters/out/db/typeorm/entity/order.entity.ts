@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-import { OrderItemTypeOrmEntity } from "./order-item.typeorm-entity";
+import { OrderItemEntity } from "./order-item.entity";
 
 @Entity({ name: "orders" })
 @Check("orders_delivery_address_check", "length(trim(delivery_address)) > 0")
@@ -18,7 +18,7 @@ import { OrderItemTypeOrmEntity } from "./order-item.typeorm-entity";
 )
 @Check("orders_total_amount_check", "total_amount >= 0")
 @Check("orders_currency_check", "currency IN ('ARS', 'USD', 'EUR')")
-export class OrderTypeOrmEntity {
+export class OrderEntity {
   @PrimaryColumn({ type: "uuid" })
   declare id: string;
 
@@ -46,6 +46,6 @@ export class OrderTypeOrmEntity {
   @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
   declare updatedAt: Date;
 
-  @OneToMany(() => OrderItemTypeOrmEntity, (item) => item.order)
-  declare items: OrderItemTypeOrmEntity[];
+  @OneToMany(() => OrderItemEntity, (item) => item.order)
+  declare items: OrderItemEntity[];
 }

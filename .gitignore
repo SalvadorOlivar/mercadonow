@@ -7,6 +7,8 @@ dist/
 build/
 .next/
 out/
+!apps/api/src/billing/application/ports/out/
+!apps/api/src/billing/application/ports/out/**
 !apps/api/src/billing/infrastructure/adapters/out/
 !apps/api/src/billing/infrastructure/adapters/out/**
 *.tsbuildinfo

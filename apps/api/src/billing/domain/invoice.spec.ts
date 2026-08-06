@@ -1,8 +1,8 @@
 import { asId } from "@mercadonow/shared";
 
-import { InvalidStateTransitionError } from "../../errors/invalid-state-transition.error";
-import { Money } from "../../value-objects/money";
-import { Invoice } from "../invoice.entity";
+import { InvalidStateTransitionError } from "./errors/invalid-state-transition.error";
+import { Money } from "./value-objects/money";
+import { Invoice } from "./invoice";
 
 const createInvoice = (): Invoice =>
   Invoice.create({

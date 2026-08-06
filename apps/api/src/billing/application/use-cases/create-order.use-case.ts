@@ -1,8 +1,8 @@
-import { Order } from "../../domain/entities/order.entity";
-import type { OrderRepository } from "../../domain/repositories/order.repository";
+import { Order } from "../../domain/order";
+import type { OrderRepositoryPort } from "../ports/out/order-repository";
 import { Money } from "../../domain/value-objects/money";
-import type { OrderIdGenerator } from "../ports/order-id-generator";
-import type { TransactionManager } from "../ports/transaction-manager";
+import type { OrderIdGenerator } from "../ports/out/order-id-generator";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager";
 import type {
   CreateOrderInput,
   CreateOrderOutput,
@@ -10,13 +10,13 @@ import type {
 
 export class CreateOrder {
   constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly transactionManager: TransactionManager,
+    private readonly orderRepositoryPort: OrderRepositoryPort,
+    private readonly transactionManagerPort: TransactionManagerPort,
     private readonly orderIdGenerator: OrderIdGenerator,
   ) {}
 
   execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
-    return this.transactionManager.run(async () => {
+    return this.transactionManagerPort.run(async () => {
       const order = Order.create({
         id: this.orderIdGenerator.generate(),
         customerId: input.customerId,
@@ -29,7 +29,7 @@ export class CreateOrder {
         })),
       });
 
-      await this.orderRepository.save(order);
+      await this.orderRepositoryPort.save(order);
 
       return {
         orderId: order.id,

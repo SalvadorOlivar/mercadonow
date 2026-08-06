@@ -5,7 +5,8 @@
 - Scope: whole monorepo
 
 > ADR-006 replaces the top-level `presentation` layer with an inbound HTTP
-> adapter. The inward dependency rule remains unchanged.
+> adapter. ADR-007 supersedes the repository-port location and domain folder
+> topology. The inward dependency rule remains unchanged.
 
 ## Context
 

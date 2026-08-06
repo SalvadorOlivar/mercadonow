@@ -1,7 +1,7 @@
 import { asId } from "@mercadonow/shared";
 
-import { Invoice } from "../../../domain/entities/invoice.entity";
-import type { InvoiceRepository } from "../../../domain/repositories/invoice.repository";
+import { Invoice } from "../../../domain/invoice";
+import type { InvoiceRepository } from "../../ports/out/invoice-repository";
 import { Money } from "../../../domain/value-objects/money";
 import { InvoiceNotFoundError } from "../../errors/billing-application.errors";
 import { GetInvoice } from "../get-invoice.use-case";

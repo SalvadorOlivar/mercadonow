@@ -1,18 +1,18 @@
 import { INVOICE_STATUSES } from "@mercadonow/shared";
 
-import { Invoice } from "../../../../../../domain/entities/invoice.entity";
+import { Invoice } from "../../../../../../domain/invoice";
 import { Money } from "../../../../../../domain/value-objects/money";
-import { InvoiceTypeOrmEntity } from "../entity/invoice.typeorm-entity";
+import { InvoiceEntity } from "../entity/invoice.entity";
 import {
   mapPersistedAggregate,
   toAllowedString,
   toCurrency,
   toSafeCents,
   toUuidV7Id,
-} from "./typeorm-persistence.mapper";
+} from "./persistence.mapper";
 
-export class InvoiceTypeOrmMapper {
-  static toDomain(entity: InvoiceTypeOrmEntity): Invoice {
+export class InvoiceMapper {
+  static toDomain(entity: InvoiceEntity): Invoice {
     return mapPersistedAggregate("invoices", () =>
       Invoice.rehydrate({
         id: toUuidV7Id(entity.id, "InvoiceId", "invoices", "id"),
@@ -42,8 +42,8 @@ export class InvoiceTypeOrmMapper {
     );
   }
 
-  static toPersistence(invoice: Invoice): InvoiceTypeOrmEntity {
-    return Object.assign(new InvoiceTypeOrmEntity(), {
+  static toPersistence(invoice: Invoice): InvoiceEntity {
+    return Object.assign(new InvoiceEntity(), {
       id: invoice.id,
       orderId: invoice.orderId,
       paymentId: invoice.paymentId,

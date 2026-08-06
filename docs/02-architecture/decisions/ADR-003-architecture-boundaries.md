@@ -42,13 +42,13 @@ infrastructure -> application / domain
 composition root -> presentation / infrastructure / application / domain
 ```
 
-- Domain owns entities, value objects, domain errors and aggregate repository
-  ports. It imports no framework, I/O package or outer layer.
-- Application owns use cases and orchestration ports: transaction management,
-  payment gateways and ID generation. It may depend on domain but never on a
-  concrete adapter or presentation.
-- Infrastructure implements domain/application ports and may depend inward on
-  those layers. It never imports presentation.
+- Domain owns aggregates, value objects and domain errors. It imports no
+  framework, I/O package or outer layer.
+- Application owns use cases and outbound ports: repositories, transaction
+  management, payment gateways and ID generation. It may depend on domain but
+  never on a concrete adapter or presentation.
+- Infrastructure implements application ports and may depend inward on the
+  application and domain layers. It never imports presentation.
 - Presentation translates HTTP to application contracts. Business rules remain
   outside controllers and DTOs.
 - `BillingModule` is the composition root and is the only Billing file expected

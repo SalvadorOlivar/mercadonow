@@ -5,7 +5,7 @@ import type {
   PaymentId,
 } from "@mercadonow/shared";
 
-import type { Money } from "../../value-objects/money";
+import type { Money } from "../value-objects/money";
 
 export interface NewInvoiceProps {
   readonly id: InvoiceId;

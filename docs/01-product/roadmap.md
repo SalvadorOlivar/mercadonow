@@ -58,7 +58,7 @@ reglas están cubiertas por pruebas.
    - Crear tablas para orders, order items, payments e invoices.
    - Incluir claves, estados, importes en centavos e índices necesarios.
 4. **Hueco de planificación — implementar adaptadores PostgreSQL — completado**
-   - `TypeOrmOrderRepository`.
+   - `OrderRepository`.
    - `TypeOrmPaymentRepository`.
    - `TypeOrmInvoiceRepository`.
    - Unidad de trabajo/transacción en la capa de aplicación cuando una

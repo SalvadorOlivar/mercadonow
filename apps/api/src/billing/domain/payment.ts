@@ -1,16 +1,12 @@
-import type {
-  OrderId,
-  PaymentId,
-  PaymentStatus,
-} from "@mercadonow/shared";
+import type { OrderId, PaymentId, PaymentStatus } from "@mercadonow/shared";
 
-import { DomainValidationError } from "../errors/domain-validation.error";
-import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
-import { Money } from "../value-objects/money";
+import { DomainValidationError } from "./errors/domain-validation.error";
+import { InvalidStateTransitionError } from "./errors/invalid-state-transition.error";
 import type {
   NewPaymentProps,
   RehydratedPaymentProps,
 } from "./interfaces/payment.interface";
+import { Money } from "./value-objects/money";
 
 export class Payment {
   readonly id: PaymentId;

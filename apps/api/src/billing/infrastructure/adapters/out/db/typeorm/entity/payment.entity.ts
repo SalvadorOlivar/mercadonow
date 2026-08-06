@@ -24,7 +24,7 @@ import {
   "payments_status_check",
   "status IN ('PENDING', 'AUTHORIZED', 'FAILED', 'REFUNDED')",
 )
-export class PaymentTypeOrmEntity {
+export class PaymentEntity {
   @PrimaryColumn({ type: "uuid" })
   declare id: string;
 

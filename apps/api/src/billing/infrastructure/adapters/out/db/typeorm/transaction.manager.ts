@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
 
-import type { TransactionManager } from "../../../../../application/ports/transaction-manager";
-import { TypeOrmEntityManagerContext } from "./typeorm-entity-manager.context";
+import type { TransactionManagerPort } from "../../../../../application/ports/out/transaction-manager";
+import { EntityManagerContext } from "./entity-manager.context";
 
 @Injectable()
-export class TypeOrmTransactionManager implements TransactionManager {
+export class TransactionManager implements TransactionManagerPort {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly context: TypeOrmEntityManagerContext,
+    private readonly context: EntityManagerContext,
   ) {}
 
   run<T>(work: () => Promise<T>): Promise<T> {

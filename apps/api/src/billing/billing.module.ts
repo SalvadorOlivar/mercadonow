@@ -19,41 +19,41 @@ import { CreateInvoice } from "./application/use-cases/create-invoice.use-case";
 import { CreateOrder } from "./application/use-cases/create-order.use-case";
 import { CreatePayment } from "./application/use-cases/create-payment.use-case";
 import { GetInvoice } from "./application/use-cases/get-invoice.use-case";
-import type { PaymentGateway } from "./application/ports/payment-gateway";
-import type { InvoiceIdGenerator } from "./application/ports/invoice-id-generator";
-import type { OrderIdGenerator } from "./application/ports/order-id-generator";
-import type { PaymentIdGenerator } from "./application/ports/payment-id-generator";
+import type { PaymentGateway } from "./application/ports/out/payment-gateway";
+import type { InvoiceIdGenerator } from "./application/ports/out/invoice-id-generator";
+import type { OrderIdGenerator } from "./application/ports/out/order-id-generator";
+import type { PaymentIdGenerator } from "./application/ports/out/payment-id-generator";
 import {
   TRANSACTION_MANAGER,
-  type TransactionManager,
-} from "./application/ports/transaction-manager";
-import { INVOICE_REPOSITORY } from "./domain/repositories/invoice.repository";
-import { ORDER_REPOSITORY } from "./domain/repositories/order.repository";
-import { PAYMENT_REPOSITORY } from "./domain/repositories/payment.repository";
+  type TransactionManagerPort,
+} from "./application/ports/out/transaction-manager";
+import { INVOICE_REPOSITORY } from "./application/ports/out/invoice-repository";
+import { ORDER_REPOSITORY } from "./application/ports/out/order-repository";
+import { PAYMENT_REPOSITORY } from "./application/ports/out/payment-repository";
 import { BillingController } from "./infrastructure/adapters/in/http/billing.controller";
 import { BILLING_TYPEORM_ENTITIES } from "./infrastructure/adapters/out/db/typeorm/entity";
-import { TypeOrmInvoiceRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-invoice.repository";
-import { TypeOrmOrderRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-order.repository";
-import { TypeOrmPaymentRepository } from "./infrastructure/adapters/out/db/typeorm/repository/typeorm-payment.repository";
-import { TypeOrmEntityManagerContext } from "./infrastructure/adapters/out/db/typeorm/typeorm-entity-manager.context";
-import { TypeOrmTransactionManager } from "./infrastructure/adapters/out/db/typeorm/typeorm-transaction.manager";
+import { InvoiceRepository } from "./infrastructure/adapters/out/db/typeorm/repository/invoice.repository";
+import { OrderRepository } from "./infrastructure/adapters/out/db/typeorm/repository/order.repository";
+import { PaymentRepository } from "./infrastructure/adapters/out/db/typeorm/repository/payment.repository";
+import { EntityManagerContext } from "./infrastructure/adapters/out/db/typeorm/entity-manager.context";
+import { TransactionManager } from "./infrastructure/adapters/out/db/typeorm/transaction.manager";
 import { UuidV7InvoiceIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-invoice-id-generator";
 import { UuidV7OrderIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-order-id-generator";
 import { UuidV7PaymentIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-payment-id-generator";
 import { SandboxPaymentGateway } from "./infrastructure/adapters/out/integration/sandbox-payment.gateway";
-import type { InvoiceRepository } from "./domain/repositories/invoice.repository";
-import type { OrderRepository } from "./domain/repositories/order.repository";
-import type { PaymentRepository } from "./domain/repositories/payment.repository";
+import type { InvoiceRepositoryPort } from "./application/ports/out/invoice-repository";
+import type { OrderRepositoryPort } from "./application/ports/out/order-repository";
+import type { PaymentRepositoryPort } from "./application/ports/out/payment-repository";
 
 @Module({
   imports: [DatabaseModule, TypeOrmModule.forFeature([...BILLING_TYPEORM_ENTITIES])],
   controllers: [BillingController],
   providers: [
-    TypeOrmEntityManagerContext,
-    { provide: ORDER_REPOSITORY, useClass: TypeOrmOrderRepository },
-    { provide: PAYMENT_REPOSITORY, useClass: TypeOrmPaymentRepository },
-    { provide: INVOICE_REPOSITORY, useClass: TypeOrmInvoiceRepository },
-    { provide: TRANSACTION_MANAGER, useClass: TypeOrmTransactionManager },
+    EntityManagerContext,
+    { provide: ORDER_REPOSITORY, useClass: OrderRepository },
+    { provide: PAYMENT_REPOSITORY, useClass: PaymentRepository },
+    { provide: INVOICE_REPOSITORY, useClass: InvoiceRepository },
+    { provide: TRANSACTION_MANAGER, useClass: TransactionManager },
     UuidV7OrderIdGenerator,
     UuidV7PaymentIdGenerator,
     UuidV7InvoiceIdGenerator,
@@ -62,8 +62,8 @@ import type { PaymentRepository } from "./domain/repositories/payment.repository
       provide: CreateOrder,
       inject: [ORDER_REPOSITORY, TRANSACTION_MANAGER, UuidV7OrderIdGenerator],
       useFactory: (
-        orders: OrderRepository,
-        transactions: TransactionManager,
+        orders: OrderRepositoryPort,
+        transactions: TransactionManagerPort,
         ids: OrderIdGenerator,
       ) => new CreateOrder(orders, transactions, ids),
     },
@@ -77,9 +77,9 @@ import type { PaymentRepository } from "./domain/repositories/payment.repository
         SandboxPaymentGateway,
       ],
       useFactory: (
-        orders: OrderRepository,
-        payments: PaymentRepository,
-        transactions: TransactionManager,
+        orders: OrderRepositoryPort,
+        payments: PaymentRepositoryPort,
+        transactions: TransactionManagerPort,
         ids: PaymentIdGenerator,
         gateway: PaymentGateway,
       ) => new CreatePayment(orders, payments, transactions, ids, gateway),
@@ -94,17 +94,17 @@ import type { PaymentRepository } from "./domain/repositories/payment.repository
         UuidV7InvoiceIdGenerator,
       ],
       useFactory: (
-        orders: OrderRepository,
-        payments: PaymentRepository,
-        invoices: InvoiceRepository,
-        transactions: TransactionManager,
+        orders: OrderRepositoryPort,
+        payments: PaymentRepositoryPort,
+        invoices: InvoiceRepositoryPort,
+        transactions: TransactionManagerPort,
         ids: InvoiceIdGenerator,
       ) => new CreateInvoice(orders, payments, invoices, transactions, ids),
     },
     {
       provide: GetInvoice,
       inject: [INVOICE_REPOSITORY],
-      useFactory: (invoices: InvoiceRepository) => new GetInvoice(invoices),
+      useFactory: (invoices: InvoiceRepositoryPort) => new GetInvoice(invoices),
     },
   ],
   exports: [

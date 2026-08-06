@@ -1,16 +1,16 @@
 import type { OrderId } from "@mercadonow/shared";
 
-import { Payment } from "../../domain/entities/payment.entity";
-import type { OrderRepository } from "../../domain/repositories/order.repository";
-import type { PaymentRepository } from "../../domain/repositories/payment.repository";
+import { Payment } from "../../domain/payment";
+import type { OrderRepositoryPort } from "../ports/out/order-repository";
+import type { PaymentRepositoryPort } from "../ports/out/payment-repository";
 import type { Money } from "../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
   OrderNotFoundError,
 } from "../errors/billing-application.errors";
-import type { PaymentGateway } from "../ports/payment-gateway";
-import type { PaymentIdGenerator } from "../ports/payment-id-generator";
-import type { TransactionManager } from "../ports/transaction-manager";
+import type { PaymentGateway } from "../ports/out/payment-gateway";
+import type { PaymentIdGenerator } from "../ports/out/payment-id-generator";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager";
 import type {
   CreatePaymentInput,
   CreatePaymentOutput,
@@ -18,15 +18,15 @@ import type {
 
 export class CreatePayment {
   constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly paymentRepository: PaymentRepository,
-    private readonly transactionManager: TransactionManager,
+    private readonly OrderRepositoryPort: OrderRepositoryPort,
+    private readonly paymentRepositoryPort: PaymentRepositoryPort,
+    private readonly transactionManagerPort: TransactionManagerPort,
     private readonly paymentIdGenerator: PaymentIdGenerator,
     private readonly paymentGateway: PaymentGateway,
   ) {}
 
   async execute(input: CreatePaymentInput): Promise<CreatePaymentOutput> {
-    const order = await this.orderRepository.findById(input.orderId);
+    const order = await this.OrderRepositoryPort.findById(input.orderId);
     if (order === null) throw new OrderNotFoundError(input.orderId);
 
     const payment = await this.claimPayment(order.id, order.total);
@@ -40,15 +40,15 @@ export class CreatePayment {
 
     if (!result.authorized) {
       payment.fail();
-      await this.transactionManager.run(() => this.paymentRepository.save(payment));
+      await this.transactionManagerPort.run(() => this.paymentRepositoryPort.save(payment));
       return this.toOutput(payment);
     }
 
     payment.authorize(result.providerReference);
     order.markPaid();
-    await this.transactionManager.run(async () => {
-      await this.paymentRepository.save(payment);
-      await this.orderRepository.save(order);
+    await this.transactionManagerPort.run(async () => {
+      await this.paymentRepositoryPort.save(payment);
+      await this.OrderRepositoryPort.save(order);
     });
 
     return this.toOutput(payment);
@@ -59,7 +59,7 @@ export class CreatePayment {
     amount: Money,
   ): Promise<Payment> {
     while (true) {
-      const previousPayments = await this.paymentRepository.findByOrderId(orderId);
+      const previousPayments = await this.paymentRepositoryPort.findByOrderId(orderId);
       const authorized = previousPayments.find(
         (payment) => payment.status === "AUTHORIZED",
       );
@@ -77,8 +77,8 @@ export class CreatePayment {
       });
 
       try {
-        await this.transactionManager.run(() =>
-          this.paymentRepository.save(payment),
+        await this.transactionManagerPort.run(() =>
+          this.paymentRepositoryPort.save(payment),
         );
         return payment;
       } catch (error) {

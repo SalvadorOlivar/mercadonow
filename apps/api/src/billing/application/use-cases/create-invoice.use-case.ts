@@ -1,7 +1,7 @@
-import { Invoice } from "../../domain/entities/invoice.entity";
-import type { InvoiceRepository } from "../../domain/repositories/invoice.repository";
-import type { OrderRepository } from "../../domain/repositories/order.repository";
-import type { PaymentRepository } from "../../domain/repositories/payment.repository";
+import { Invoice } from "../../domain/invoice";
+import type { InvoiceRepositoryPort } from "../ports/out/invoice-repository";
+import type { OrderRepositoryPort } from "../ports/out/order-repository";
+import type { PaymentRepositoryPort } from "../ports/out/payment-repository";
 import {
   InvoiceAlreadyExistsError,
   OrderNotFoundError,
@@ -9,8 +9,8 @@ import {
   PaymentNotFoundError,
   PaymentOrderMismatchError,
 } from "../errors/billing-application.errors";
-import type { InvoiceIdGenerator } from "../ports/invoice-id-generator";
-import type { TransactionManager } from "../ports/transaction-manager";
+import type { InvoiceIdGenerator } from "../ports/out/invoice-id-generator";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager";
 import type {
   CreateInvoiceInput,
   CreateInvoiceOutput,
@@ -18,18 +18,18 @@ import type {
 
 export class CreateInvoice {
   constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly paymentRepository: PaymentRepository,
-    private readonly invoiceRepository: InvoiceRepository,
-    private readonly transactionManager: TransactionManager,
+    private readonly orderRepositoryPort: OrderRepositoryPort,
+    private readonly paymentRepositoryPort: PaymentRepositoryPort,
+    private readonly invoiceRepositoryPort: InvoiceRepositoryPort,
+    private readonly transactionManagerPort: TransactionManagerPort,
     private readonly invoiceIdGenerator: InvoiceIdGenerator,
   ) {}
 
   async execute(input: CreateInvoiceInput): Promise<CreateInvoiceOutput> {
-    const order = await this.orderRepository.findById(input.orderId);
+    const order = await this.orderRepositoryPort.findById(input.orderId);
     if (order === null) throw new OrderNotFoundError(input.orderId);
 
-    const payment = await this.paymentRepository.findById(input.paymentId);
+    const payment = await this.paymentRepositoryPort.findById(input.paymentId);
     if (payment === null) throw new PaymentNotFoundError(input.paymentId);
     if (payment.orderId !== order.id) {
       throw new PaymentOrderMismatchError(payment.id, order.id);
@@ -38,7 +38,7 @@ export class CreateInvoice {
       throw new PaymentNotAuthorizedError(payment.id);
     }
 
-    const existing = await this.invoiceRepository.findByPaymentId(payment.id);
+    const existing = await this.invoiceRepositoryPort.findByPaymentId(payment.id);
     if (existing !== null) return this.toOutput(existing);
 
     const invoice = Invoice.create({
@@ -50,14 +50,14 @@ export class CreateInvoice {
     invoice.issue();
 
     try {
-      await this.transactionManager.run(() => this.invoiceRepository.save(invoice));
+      await this.transactionManagerPort.run(() => this.invoiceRepositoryPort.save(invoice));
     } catch (error) {
       if (!(error instanceof InvoiceAlreadyExistsError)) throw error;
 
       // The failed INSERT transaction has rolled back before this read. The
       // unique payment_id constraint guarantees that the winning invoice is
       // now the stable idempotent result.
-      const concurrentInvoice = await this.invoiceRepository.findByPaymentId(
+      const concurrentInvoice = await this.invoiceRepositoryPort.findByPaymentId(
         payment.id,
       );
       if (concurrentInvoice === null) throw error;

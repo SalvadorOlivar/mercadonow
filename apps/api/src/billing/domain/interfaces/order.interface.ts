@@ -5,7 +5,7 @@ import type {
   OrderStatus,
 } from "@mercadonow/shared";
 
-import type { Money } from "../../value-objects/money";
+import type { Money } from "../value-objects/money";
 
 export interface OrderItem {
   readonly productId: string;

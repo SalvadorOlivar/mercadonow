@@ -7,7 +7,7 @@ import {
   toCurrency,
   toSafeCents,
   toUuidV7Id,
-} from "./typeorm-persistence.mapper";
+} from "./persistence.mapper";
 
 const uuidV7 = "0198f5ef-b5bd-7c86-a7b2-bc32c5c57888";
 

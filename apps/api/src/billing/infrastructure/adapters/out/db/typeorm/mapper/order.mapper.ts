@@ -1,9 +1,9 @@
 import { ORDER_STATUSES } from "@mercadonow/shared";
 
-import { Order } from "../../../../../../domain/entities/order.entity";
+import { Order } from "../../../../../../domain/order";
 import { Money } from "../../../../../../domain/value-objects/money";
-import { OrderItemTypeOrmEntity } from "../entity/order-item.typeorm-entity";
-import { OrderTypeOrmEntity } from "../entity/order.typeorm-entity";
+import { OrderItemEntity } from "../entity/order-item.entity";
+import { OrderEntity } from "../entity/order.entity";
 import { PersistenceMappingError } from "./persistence-mapping.error";
 import {
   mapPersistedAggregate,
@@ -14,10 +14,10 @@ import {
   toPositiveInteger,
   toSafeCents,
   toUuidV7Id,
-} from "./typeorm-persistence.mapper";
+} from "./persistence.mapper";
 
-export class OrderTypeOrmMapper {
-  static toDomain(entity: OrderTypeOrmEntity): Order {
+export class OrderMapper {
+  static toDomain(entity: OrderEntity): Order {
     return mapPersistedAggregate("orders", () => {
       const items = [...(entity.items ?? [])].sort(
         (left, right) =>
@@ -89,10 +89,10 @@ export class OrderTypeOrmMapper {
   }
 
   static toPersistence(order: Order): {
-    order: OrderTypeOrmEntity;
-    items: OrderItemTypeOrmEntity[];
+    order: OrderEntity;
+    items: OrderItemEntity[];
   } {
-    const entity = Object.assign(new OrderTypeOrmEntity(), {
+    const entity = Object.assign(new OrderEntity(), {
       id: order.id,
       customerId: order.customerId,
       merchantId: order.merchantId,
@@ -102,7 +102,7 @@ export class OrderTypeOrmMapper {
       currency: order.total.currency,
     });
     const items = order.items.map((item, position) =>
-      Object.assign(new OrderItemTypeOrmEntity(), {
+      Object.assign(new OrderItemEntity(), {
         orderId: order.id,
         position,
         productId: item.productId,

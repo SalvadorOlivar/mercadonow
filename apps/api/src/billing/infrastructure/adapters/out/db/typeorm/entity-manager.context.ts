@@ -5,7 +5,7 @@ import type { EntityManager } from "typeorm";
 import { DataSource } from "typeorm";
 
 @Injectable()
-export class TypeOrmEntityManagerContext {
+export class EntityManagerContext {
   private readonly storage = new AsyncLocalStorage<EntityManager>();
 
   constructor(private readonly dataSource: DataSource) {}

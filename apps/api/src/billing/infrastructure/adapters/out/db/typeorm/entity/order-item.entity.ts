@@ -7,7 +7,7 @@ import {
   PrimaryColumn,
 } from "typeorm";
 
-import { OrderTypeOrmEntity } from "./order.typeorm-entity";
+import { OrderEntity } from "./order.entity";
 
 @Entity({ name: "order_items" })
 @Check("order_items_position_check", "position >= 0")
@@ -15,7 +15,7 @@ import { OrderTypeOrmEntity } from "./order.typeorm-entity";
 @Check("order_items_quantity_check", "quantity > 0")
 @Check("order_items_unit_price_amount_check", "unit_price_amount >= 0")
 @Check("order_items_currency_check", "currency IN ('ARS', 'USD', 'EUR')")
-export class OrderItemTypeOrmEntity {
+export class OrderItemEntity {
   @PrimaryColumn({ name: "order_id", type: "uuid" })
   declare orderId: string;
 
@@ -34,9 +34,9 @@ export class OrderItemTypeOrmEntity {
   @Column({ type: "text" })
   declare currency: string;
 
-  @ManyToOne(() => OrderTypeOrmEntity, (order) => order.items, {
+  @ManyToOne(() => OrderEntity, (order) => order.items, {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "order_id" })
-  declare order: OrderTypeOrmEntity;
+  declare order: OrderEntity;
 }

@@ -1,9 +1,9 @@
 import { asId, BILLING_CONTRACT_LIMITS } from "@mercadonow/shared";
 
-import { DomainValidationError } from "../../errors/domain-validation.error";
-import { InvalidStateTransitionError } from "../../errors/invalid-state-transition.error";
-import { Money } from "../../value-objects/money";
-import { Order } from "../order.entity";
+import { DomainValidationError } from "./errors/domain-validation.error";
+import { InvalidStateTransitionError } from "./errors/invalid-state-transition.error";
+import { Money } from "./value-objects/money";
+import { Order } from "./order";
 
 const createOrder = (): Order =>
   Order.create({

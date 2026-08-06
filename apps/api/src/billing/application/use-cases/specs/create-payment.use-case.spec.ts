@@ -1,17 +1,17 @@
 import { asId } from "@mercadonow/shared";
 
-import { Order } from "../../../domain/entities/order.entity";
-import { Payment } from "../../../domain/entities/payment.entity";
-import type { OrderRepository } from "../../../domain/repositories/order.repository";
-import type { PaymentRepository } from "../../../domain/repositories/payment.repository";
+import { Order } from "../../../domain/order";
+import { Payment } from "../../../domain/payment";
+import type { OrderRepository } from "../../ports/out/order-repository";
+import type { PaymentRepository } from "../../ports/out/payment-repository";
 import { Money } from "../../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
   OrderNotFoundError,
 } from "../../errors/billing-application.errors";
-import type { PaymentGateway } from "../../ports/payment-gateway";
-import type { PaymentIdGenerator } from "../../ports/payment-id-generator";
-import type { TransactionManager } from "../../ports/transaction-manager";
+import type { PaymentGateway } from "../../ports/out/payment-gateway";
+import type { PaymentIdGenerator } from "../../ports/out/payment-id-generator";
+import type { TransactionManager } from "../../ports/out/transaction-manager";
 import { CreatePayment } from "../create-payment.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");

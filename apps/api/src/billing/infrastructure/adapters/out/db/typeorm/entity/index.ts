@@ -1,16 +1,16 @@
-import { InvoiceTypeOrmEntity } from "./invoice.typeorm-entity";
-import { OrderItemTypeOrmEntity } from "./order-item.typeorm-entity";
-import { OrderTypeOrmEntity } from "./order.typeorm-entity";
-import { PaymentTypeOrmEntity } from "./payment.typeorm-entity";
+import { InvoiceEntity } from "./invoice.entity";
+import { OrderItemEntity } from "./order-item.entity";
+import { OrderEntity } from "./order.entity";
+import { PaymentEntity } from "./payment.entity";
 
 export const BILLING_TYPEORM_ENTITIES = [
-  OrderTypeOrmEntity,
-  OrderItemTypeOrmEntity,
-  PaymentTypeOrmEntity,
-  InvoiceTypeOrmEntity,
+  OrderEntity,
+  OrderItemEntity,
+  PaymentEntity,
+  InvoiceEntity,
 ] as const;
 
-export { InvoiceTypeOrmEntity } from "./invoice.typeorm-entity";
-export { OrderItemTypeOrmEntity } from "./order-item.typeorm-entity";
-export { OrderTypeOrmEntity } from "./order.typeorm-entity";
-export { PaymentTypeOrmEntity } from "./payment.typeorm-entity";
+export { InvoiceEntity } from "./invoice.entity";
+export { OrderItemEntity } from "./order-item.entity";
+export { OrderEntity } from "./order.entity";
+export { PaymentEntity } from "./payment.entity";

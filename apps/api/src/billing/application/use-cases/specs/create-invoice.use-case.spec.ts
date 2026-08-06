@@ -1,11 +1,11 @@
 import { asId } from "@mercadonow/shared";
 
-import { Invoice } from "../../../domain/entities/invoice.entity";
-import { Order } from "../../../domain/entities/order.entity";
-import { Payment } from "../../../domain/entities/payment.entity";
-import type { InvoiceRepository } from "../../../domain/repositories/invoice.repository";
-import type { OrderRepository } from "../../../domain/repositories/order.repository";
-import type { PaymentRepository } from "../../../domain/repositories/payment.repository";
+import { Invoice } from "../../../domain/invoice";
+import { Order } from "../../../domain/order";
+import { Payment } from "../../../domain/payment";
+import type { InvoiceRepository } from "../../ports/out/invoice-repository";
+import type { OrderRepository } from "../../ports/out/order-repository";
+import type { PaymentRepository } from "../../ports/out/payment-repository";
 import { Money } from "../../../domain/value-objects/money";
 import {
   InvoiceAlreadyExistsError,
@@ -14,8 +14,8 @@ import {
   PaymentNotFoundError,
   PaymentOrderMismatchError,
 } from "../../errors/billing-application.errors";
-import type { InvoiceIdGenerator } from "../../ports/invoice-id-generator";
-import type { TransactionManager } from "../../ports/transaction-manager";
+import type { InvoiceIdGenerator } from "../../ports/out/invoice-id-generator";
+import type { TransactionManager } from "../../ports/out/transaction-manager";
 import { CreateInvoice } from "../create-invoice.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");

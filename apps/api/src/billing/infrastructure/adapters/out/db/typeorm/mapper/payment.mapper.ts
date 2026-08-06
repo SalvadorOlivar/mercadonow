@@ -1,8 +1,8 @@
 import { PAYMENT_STATUSES } from "@mercadonow/shared";
 
-import { Payment } from "../../../../../../domain/entities/payment.entity";
+import { Payment } from "../../../../../../domain/payment";
 import { Money } from "../../../../../../domain/value-objects/money";
-import { PaymentTypeOrmEntity } from "../entity/payment.typeorm-entity";
+import { PaymentEntity } from "../entity/payment.entity";
 import {
   mapPersistedAggregate,
   toAllowedString,
@@ -10,10 +10,10 @@ import {
   toOptionalNonBlankText,
   toSafeCents,
   toUuidV7Id,
-} from "./typeorm-persistence.mapper";
+} from "./persistence.mapper";
 
-export class PaymentTypeOrmMapper {
-  static toDomain(entity: PaymentTypeOrmEntity): Payment {
+export class PaymentMapper {
+  static toDomain(entity: PaymentEntity): Payment {
     return mapPersistedAggregate("payments", () =>
       Payment.rehydrate({
         id: toUuidV7Id(entity.id, "PaymentId", "payments", "id"),
@@ -42,8 +42,8 @@ export class PaymentTypeOrmMapper {
     );
   }
 
-  static toPersistence(payment: Payment): PaymentTypeOrmEntity {
-    return Object.assign(new PaymentTypeOrmEntity(), {
+  static toPersistence(payment: Payment): PaymentEntity {
+    return Object.assign(new PaymentEntity(), {
       id: payment.id,
       orderId: payment.orderId,
       amount: String(payment.amount.amount),

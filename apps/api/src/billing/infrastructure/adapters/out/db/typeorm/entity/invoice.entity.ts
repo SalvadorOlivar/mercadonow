@@ -16,7 +16,7 @@ import {
   "invoices_status_check",
   "status IN ('DRAFT', 'ISSUED', 'PAID', 'CANCELLED')",
 )
-export class InvoiceTypeOrmEntity {
+export class InvoiceEntity {
   @PrimaryColumn({ type: "uuid" })
   declare id: string;
 

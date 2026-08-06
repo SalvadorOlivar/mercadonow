@@ -1,10 +1,10 @@
 import { asId } from "@mercadonow/shared";
 
 import { DomainValidationError } from "../../../domain/errors/domain-validation.error";
-import type { Order } from "../../../domain/entities/order.entity";
-import type { OrderRepository } from "../../../domain/repositories/order.repository";
-import type { TransactionManager } from "../../ports/transaction-manager";
-import type { OrderIdGenerator } from "../../ports/order-id-generator";
+import type { Order } from "../../../domain/order";
+import type { OrderRepository } from "../../ports/out/order-repository";
+import type { TransactionManager } from "../../ports/out/transaction-manager";
+import type { OrderIdGenerator } from "../../ports/out/order-id-generator";
 import { CreateOrder } from "../create-order.use-case";
 import type { CreateOrderInput } from "../interfaces/create-order.interface";
 

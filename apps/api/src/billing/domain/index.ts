@@ -1,20 +1,17 @@
 /**
  * Domain layer — billing.
  *
- * Entities, value objects, domain errors, and repository PORTS (interfaces).
+ * Aggregates, value objects, and domain errors.
  * Must not import anything from application or infrastructure adapters.
  * Must not import NestJS, pg, or any I/O library.
  */
-export * from "./entities/invoice.entity";
-export * from "./entities/order.entity";
-export * from "./entities/payment.entity";
-export * from "./entities/interfaces/invoice.interface";
-export * from "./entities/interfaces/order.interface";
-export * from "./entities/interfaces/payment.interface";
+export * from "./invoice";
+export * from "./order";
+export * from "./payment";
+export * from "./interfaces/invoice.interface";
+export * from "./interfaces/order.interface";
+export * from "./interfaces/payment.interface";
 export * from "./errors/domain-validation.error";
 export * from "./errors/invalid-state-transition.error";
 export * from "./errors/billing.error";
-export * from "./repositories/invoice.repository";
-export * from "./repositories/order.repository";
-export * from "./repositories/payment.repository";
 export * from "./value-objects/money";

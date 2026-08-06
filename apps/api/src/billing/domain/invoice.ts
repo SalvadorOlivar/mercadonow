@@ -1,16 +1,11 @@
-import type {
-  InvoiceId,
-  InvoiceStatus,
-  OrderId,
-  PaymentId,
-} from "@mercadonow/shared";
+import type { InvoiceId, InvoiceStatus, OrderId, PaymentId } from "@mercadonow/shared";
 
-import { InvalidStateTransitionError } from "../errors/invalid-state-transition.error";
-import { Money } from "../value-objects/money";
+import { InvalidStateTransitionError } from "./errors/invalid-state-transition.error";
 import type {
   NewInvoiceProps,
   RehydratedInvoiceProps,
 } from "./interfaces/invoice.interface";
+import { Money } from "./value-objects/money";
 
 export class Invoice {
   readonly id: InvoiceId;

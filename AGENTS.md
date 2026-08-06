@@ -70,16 +70,17 @@ adapters/out -> application / domain
 `BillingModule` is the composition root and may import every layer. Inbound and
 outbound adapters depend inward and never import one another.
 
-- `domain/` — entities, value objects, domain errors, repository PORTS
-  (interfaces). **Must not import** NestJS, TypeORM, `pg`, or outer layers.
+- `domain/` — one file per aggregate (`invoice.ts`, `order.ts`, `payment.ts`),
+  one interface file per aggregate under `interfaces/`, plus value objects and
+  domain errors. **Must not import** NestJS, TypeORM, `pg`, or outer layers.
   New aggregates use `create`; persistence reconstructs them with `rehydrate`.
-- `application/` — one use-case class per operation plus orchestration ports
-  such as transactions, gateways and ID generation. Depends on domain. Owns
-  the transaction boundary.
+- `application/` — one use-case class per operation plus outbound ports such as
+  repositories, transactions, gateways and ID generation. Depends on domain.
+  Owns the transaction boundary.
 - `infrastructure/adapters/in/http/` — thin NestJS controllers and DTOs. No
   business logic. Application-wide pipes and filters remain in `common/http`.
-- `infrastructure/adapters/out/` — adapters implementing domain/application
-  ports: TypeORM repositories and transactions, gateways and ID generators.
+- `infrastructure/adapters/out/` — adapters implementing application ports:
+  TypeORM repositories and transactions, gateways and ID generators.
 
 Controllers stay thin: HTTP → DTO → use case. Repositories do not own
 transactions (use cases do). TypeORM entities are persistence models, never
