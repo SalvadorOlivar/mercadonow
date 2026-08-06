@@ -3,9 +3,9 @@ import { asId } from "@mercadonow/shared";
 import { Invoice } from "../../../domain/invoice";
 import { Order } from "../../../domain/order";
 import { Payment } from "../../../domain/payment";
-import type { InvoiceRepository } from "../../ports/out/invoice-repository";
-import type { OrderRepository } from "../../ports/out/order-repository";
-import type { PaymentRepository } from "../../ports/out/payment-repository";
+import type { InvoiceRepositoryPort } from "../../ports/out/invoice-repository";
+import type { OrderRepositoryPort } from "../../ports/out/order-repository";
+import type { PaymentRepositoryPort } from "../../ports/out/payment-repository";
 import { Money } from "../../../domain/value-objects/money";
 import {
   InvoiceAlreadyExistsError,
@@ -15,7 +15,7 @@ import {
   PaymentOrderMismatchError,
 } from "../../errors/billing-application.errors";
 import type { InvoiceIdGenerator } from "../../ports/out/invoice-id-generator";
-import type { TransactionManager } from "../../ports/out/transaction-manager";
+import type { TransactionManagerPort } from "../../ports/out/transaction-manager";
 import { CreateInvoice } from "../create-invoice.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
@@ -55,24 +55,24 @@ const setup = (options?: {
   payment?: Payment | null;
   existingInvoice?: Invoice | null;
 }) => {
-  const orderRepository: jest.Mocked<OrderRepository> = {
+  const orderRepository: jest.Mocked<OrderRepositoryPort> = {
     findById: jest.fn().mockResolvedValue(options?.order === undefined ? makeOrder() : options.order),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const paymentRepository: jest.Mocked<PaymentRepository> = {
+  const paymentRepository: jest.Mocked<PaymentRepositoryPort> = {
     findById: jest.fn().mockResolvedValue(
       options?.payment === undefined ? makePayment() : options.payment,
     ),
     findByOrderId: jest.fn().mockResolvedValue([]),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const invoiceRepository: jest.Mocked<InvoiceRepository> = {
+  const invoiceRepository: jest.Mocked<InvoiceRepositoryPort> = {
     findById: jest.fn().mockResolvedValue(null),
     findByOrderId: jest.fn().mockResolvedValue(null),
     findByPaymentId: jest.fn().mockResolvedValue(options?.existingInvoice ?? null),
     save: jest.fn().mockResolvedValue(undefined),
   };
-  const transactionManager: TransactionManager = {
+  const transactionManager: TransactionManagerPort = {
     run: jest.fn(async <T>(work: () => Promise<T>) => work()),
   };
   const idGenerator: InvoiceIdGenerator = { generate: () => invoiceId };

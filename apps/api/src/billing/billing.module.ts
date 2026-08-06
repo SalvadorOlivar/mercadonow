@@ -1,20 +1,6 @@
-/**
- * Billing module — modular monolith boundary.
- *
- * Internal layering (Clean Architecture):
- *   domain/          Entities, value objects, domain errors, ports (interfaces).
- *                    No NestJS, no ORM, no I/O. Pure TypeScript.
- *   application/     Use cases and orchestration ports. Depends on domain.
- *   infrastructure/adapters/in/   HTTP controllers and DTOs.
- *   infrastructure/adapters/out/  TypeORM repositories and external adapters.
- *
- * Dependency direction: adapters -> application -> domain. Inbound and
- * outbound adapters do not depend on one another.
- * BillingModule is the composition root and may import every layer.
- */
+
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { DatabaseModule } from "../database/database.module";
 import { CreateInvoice } from "./application/use-cases/create-invoice.use-case";
 import { CreateOrder } from "./application/use-cases/create-order.use-case";
 import { CreatePayment } from "./application/use-cases/create-payment.use-case";
@@ -46,7 +32,7 @@ import type { OrderRepositoryPort } from "./application/ports/out/order-reposito
 import type { PaymentRepositoryPort } from "./application/ports/out/payment-repository";
 
 @Module({
-  imports: [DatabaseModule, TypeOrmModule.forFeature([...BILLING_TYPEORM_ENTITIES])],
+  imports: [TypeOrmModule.forFeature([...BILLING_TYPEORM_ENTITIES])],
   controllers: [BillingController],
   providers: [
     EntityManagerContext,
