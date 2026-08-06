@@ -1,5 +1,6 @@
 import { DataSource, type DataSourceOptions } from 'typeorm';
 
+import { DATABASE_MIGRATIONS } from '../migrations';
 import { POSTGRESQL_ENTITIES } from './entities/postgresql.entities';
 
 export const createPostgresqlDataSourceOptions = (
@@ -9,7 +10,7 @@ export const createPostgresqlDataSourceOptions = (
     type: 'postgres',
     url: databaseUrl,
     entities: [...POSTGRESQL_ENTITIES],
-    migrations: [],
+    migrations: [...DATABASE_MIGRATIONS],
     migrationsTableName: 'typeorm_migrations',
     migrationsRun: false,
     synchronize: false,
