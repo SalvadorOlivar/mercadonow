@@ -1,10 +1,10 @@
-import { asId } from "@mercadonow/shared";
+import { asId, type OrderId } from "@mercadonow/shared";
 
 import { DomainValidationError } from "../../../domain/errors/domain-validation.error";
 import type { Order } from "../../../domain/order";
-import type { OrderPort } from "../../ports/out/order-repository";
-import type { TransactionManagerPort } from "../../ports/out/transaction-manager";
-import type { OrderIdGenerator } from "../../ports/out/order-id-generator";
+import type { OrderPort } from "../../ports/out/order.port";
+import type { IdGenerator } from "../../ports/out/id-generator.port";
+import type { TransactionManagerPort } from "../../ports/out/transaction-manager.port";
 import { CreateOrder } from "../create-order.use-case";
 import type { CreateOrderInput } from "../interfaces/create-order.interface";
 
@@ -39,7 +39,7 @@ class InMemoryOrderRepository implements OrderPort {
   }
 }
 
-class FixedOrderIdGenerator implements OrderIdGenerator {
+class FixedOrderIdGenerator implements IdGenerator<OrderId> {
   readonly id = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
 
   generate() {

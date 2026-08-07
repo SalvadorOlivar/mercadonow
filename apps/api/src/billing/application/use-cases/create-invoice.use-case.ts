@@ -1,7 +1,9 @@
+import type { InvoiceId } from "@mercadonow/shared";
+
 import { Invoice } from "../../domain/invoice";
 import type { InvoicePort } from "../ports/out/invoice.port";
-import type { OrderPort } from "../ports/out/order-repository";
-import type { PaymentPort } from "../ports/out/payment-repository";
+import type { OrderPort } from "../ports/out/order.port";
+import type { PaymentPort } from "../ports/out/payment.port";
 import {
   InvoiceAlreadyExistsError,
   OrderNotFoundError,
@@ -9,8 +11,8 @@ import {
   PaymentNotFoundError,
   PaymentOrderMismatchError,
 } from "../errors/billing-application.errors";
-import type { InvoiceIdGenerator } from "../ports/out/invoice-id-generator";
-import type { TransactionManagerPort } from "../ports/out/transaction-manager";
+import type { IdGenerator } from "../ports/out/id-generator.port";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager.port";
 import type {
   CreateInvoiceInput,
   CreateInvoiceOutput,
@@ -22,7 +24,7 @@ export class CreateInvoice {
     private readonly PaymentPort: PaymentPort,
     private readonly InvoicePort: InvoicePort,
     private readonly transactionManagerPort: TransactionManagerPort,
-    private readonly invoiceIdGenerator: InvoiceIdGenerator,
+    private readonly invoiceIdGenerator: IdGenerator<InvoiceId>,
   ) {}
 
   async execute(input: CreateInvoiceInput): Promise<CreateInvoiceOutput> {

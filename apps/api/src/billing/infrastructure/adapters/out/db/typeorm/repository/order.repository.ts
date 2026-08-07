@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { OrderId } from "@mercadonow/shared";
 
-import type { OrderPort } from "../../../../../../application/ports/out/order-repository";
+import type { OrderPort } from "../../../../../../application/ports/out/order.port";
 import type { Order } from "../../../../../../domain/order";
 import { OrderItemEntity } from "../entity/order-item.entity";
 import { OrderEntity } from "../entity/order.entity";

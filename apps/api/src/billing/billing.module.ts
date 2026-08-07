@@ -1,21 +1,29 @@
-
+import {
+  asId,
+  type InvoiceId,
+  type OrderId,
+  type PaymentId,
+} from "@mercadonow/shared";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CreateInvoice } from "./application/use-cases/create-invoice.use-case";
 import { CreateOrder } from "./application/use-cases/create-order.use-case";
 import { CreatePayment } from "./application/use-cases/create-payment.use-case";
 import { GetInvoice } from "./application/use-cases/get-invoice.use-case";
-import type { PaymentGateway } from "./application/ports/out/payment-gateway";
-import type { InvoiceIdGenerator } from "./application/ports/out/invoice-id-generator";
-import type { OrderIdGenerator } from "./application/ports/out/order-id-generator";
-import type { PaymentIdGenerator } from "./application/ports/out/payment-id-generator";
+import type { PaymentGateway } from "./application/use-cases/interfaces/payment-gateway";
+import {
+  INVOICE_ID_GENERATOR,
+  ORDER_ID_GENERATOR,
+  PAYMENT_ID_GENERATOR,
+  type IdGenerator,
+} from "./application/ports/out/id-generator.port";
 import {
   TRANSACTION_MANAGER,
   type TransactionManagerPort,
-} from "./application/ports/out/transaction-manager";
+} from "./application/ports/out/transaction-manager.port";
 import { INVOICE_REPOSITORY } from "./application/ports/out/invoice.port";
-import { ORDER_REPOSITORY } from "./application/ports/out/order-repository";
-import { PAYMENT_REPOSITORY } from "./application/ports/out/payment-repository";
+import { ORDER_REPOSITORY } from "./application/ports/out/order.port";
+import { PAYMENT_REPOSITORY } from "./application/ports/out/payment.port";
 import { BillingController } from "./infrastructure/adapters/in/http/billing.controller";
 import { BILLING_TYPEORM_ENTITIES } from "./infrastructure/adapters/out/db/typeorm/entity";
 import { InvoiceRepository } from "./infrastructure/adapters/out/db/typeorm/repository/invoice.repository";
@@ -23,13 +31,11 @@ import { OrderRepository } from "./infrastructure/adapters/out/db/typeorm/reposi
 import { PaymentRepository } from "./infrastructure/adapters/out/db/typeorm/repository/payment.repository";
 import { EntityManagerContext } from "./infrastructure/adapters/out/db/typeorm/entity-manager.context";
 import { TransactionManager } from "./infrastructure/adapters/out/db/typeorm/transaction.manager";
-import { UuidV7InvoiceIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-invoice-id-generator";
-import { UuidV7OrderIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-order-id-generator";
-import { UuidV7PaymentIdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-payment-id-generator";
 import { SandboxPaymentGateway } from "./infrastructure/adapters/out/integration/sandbox-payment.gateway";
+import { UuidV7IdGenerator } from "./infrastructure/adapters/out/id/uuid-v7-id-generator";
 import type { InvoicePort } from "./application/ports/out/invoice.port";
-import type { OrderPort } from "./application/ports/out/order-repository";
-import type { PaymentPort } from "./application/ports/out/payment-repository";
+import type { OrderPort } from "./application/ports/out/order.port";
+import type { PaymentPort } from "./application/ports/out/payment.port";
 
 @Module({
   imports: [TypeOrmModule.forFeature([...BILLING_TYPEORM_ENTITIES])],
@@ -40,17 +46,29 @@ import type { PaymentPort } from "./application/ports/out/payment-repository";
     { provide: PAYMENT_REPOSITORY, useClass: PaymentRepository },
     { provide: INVOICE_REPOSITORY, useClass: InvoiceRepository },
     { provide: TRANSACTION_MANAGER, useClass: TransactionManager },
-    UuidV7OrderIdGenerator,
-    UuidV7PaymentIdGenerator,
-    UuidV7InvoiceIdGenerator,
+    {
+      provide: ORDER_ID_GENERATOR,
+      useFactory: () =>
+        new UuidV7IdGenerator((value) => asId(value, "OrderId")),
+    },
+    {
+      provide: PAYMENT_ID_GENERATOR,
+      useFactory: () =>
+        new UuidV7IdGenerator((value) => asId(value, "PaymentId")),
+    },
+    {
+      provide: INVOICE_ID_GENERATOR,
+      useFactory: () =>
+        new UuidV7IdGenerator((value) => asId(value, "InvoiceId")),
+    },
     SandboxPaymentGateway,
     {
       provide: CreateOrder,
-      inject: [ORDER_REPOSITORY, TRANSACTION_MANAGER, UuidV7OrderIdGenerator],
+      inject: [ORDER_REPOSITORY, TRANSACTION_MANAGER, ORDER_ID_GENERATOR],
       useFactory: (
         orders: OrderPort,
         transactions: TransactionManagerPort,
-        ids: OrderIdGenerator,
+        ids: IdGenerator<OrderId>,
       ) => new CreateOrder(orders, transactions, ids),
     },
     {
@@ -59,14 +77,14 @@ import type { PaymentPort } from "./application/ports/out/payment-repository";
         ORDER_REPOSITORY,
         PAYMENT_REPOSITORY,
         TRANSACTION_MANAGER,
-        UuidV7PaymentIdGenerator,
+        PAYMENT_ID_GENERATOR,
         SandboxPaymentGateway,
       ],
       useFactory: (
         orders: OrderPort,
         payments: PaymentPort,
         transactions: TransactionManagerPort,
-        ids: PaymentIdGenerator,
+        ids: IdGenerator<PaymentId>,
         gateway: PaymentGateway,
       ) => new CreatePayment(orders, payments, transactions, ids, gateway),
     },
@@ -77,14 +95,14 @@ import type { PaymentPort } from "./application/ports/out/payment-repository";
         PAYMENT_REPOSITORY,
         INVOICE_REPOSITORY,
         TRANSACTION_MANAGER,
-        UuidV7InvoiceIdGenerator,
+        INVOICE_ID_GENERATOR,
       ],
       useFactory: (
         orders: OrderPort,
         payments: PaymentPort,
         invoices: InvoicePort,
         transactions: TransactionManagerPort,
-        ids: InvoiceIdGenerator,
+        ids: IdGenerator<InvoiceId>,
       ) => new CreateInvoice(orders, payments, invoices, transactions, ids),
     },
     {

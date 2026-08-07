@@ -1,11 +1,12 @@
-import { asId } from "@mercadonow/shared";
+import { asId, type InvoiceId } from "@mercadonow/shared";
 
 import { Invoice } from "../../../domain/invoice";
 import { Order } from "../../../domain/order";
 import { Payment } from "../../../domain/payment";
 import type { InvoicePort } from "../../ports/out/invoice.port";
-import type { OrderPort } from "../../ports/out/order-repository";
-import type { PaymentPort } from "../../ports/out/payment-repository";
+import type { IdGenerator } from "../../ports/out/id-generator.port";
+import type { OrderPort } from "../../ports/out/order.port";
+import type { PaymentPort } from "../../ports/out/payment.port";
 import { Money } from "../../../domain/value-objects/money";
 import {
   InvoiceAlreadyExistsError,
@@ -14,8 +15,7 @@ import {
   PaymentNotFoundError,
   PaymentOrderMismatchError,
 } from "../../errors/billing-application.errors";
-import type { InvoiceIdGenerator } from "../../ports/out/invoice-id-generator";
-import type { TransactionManagerPort } from "../../ports/out/transaction-manager";
+import type { TransactionManagerPort } from "../../ports/out/transaction-manager.port";
 import { CreateInvoice } from "../create-invoice.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
@@ -75,7 +75,7 @@ const setup = (options?: {
   const transactionManager: TransactionManagerPort = {
     run: jest.fn(async <T>(work: () => Promise<T>) => work()),
   };
-  const idGenerator: InvoiceIdGenerator = { generate: () => invoiceId };
+  const idGenerator: IdGenerator<InvoiceId> = { generate: () => invoiceId };
   const useCase = new CreateInvoice(
     orderRepository,
     paymentRepository,

@@ -1,8 +1,8 @@
-import { asId } from "@mercadonow/shared";
+import { asId, type PaymentId } from "@mercadonow/shared";
 import type { DataSource } from "typeorm";
 
-import type { PaymentGateway } from "../src/billing/application/ports/out/payment-gateway";
-import type { PaymentIdGenerator } from "../src/billing/application/ports/out/payment-id-generator";
+import type { IdGenerator } from "../src/billing/application/ports/out/id-generator.port";
+import type { PaymentGateway } from "../src/billing/application/use-cases/interfaces/payment-gateway";
 import { CreateInvoice } from "../src/billing/application/use-cases/create-invoice.use-case";
 import { CreatePayment } from "../src/billing/application/use-cases/create-payment.use-case";
 import { Invoice } from "../src/billing/domain/invoice";
@@ -231,7 +231,7 @@ describe("TypeORM billing repositories", () => {
         };
       },
     };
-    const makeUseCase = (ids: PaymentIdGenerator) =>
+    const makeUseCase = (ids: IdGenerator<PaymentId>) =>
       new CreatePayment(orders, payments, transactions, ids, gateway);
 
     const results = await Promise.all([

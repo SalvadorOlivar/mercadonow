@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type { OrderId, PaymentId } from "@mercadonow/shared";
 
 import { ActivePaymentAlreadyExistsError } from "../../../../../../application/errors/billing-application.errors";
-import type { PaymentPort } from "../../../../../../application/ports/out/payment-repository";
+import type { PaymentPort } from "../../../../../../application/ports/out/payment.port";
 import type { Payment } from "../../../../../../domain/payment";
 import { PaymentEntity } from "../entity/payment.entity";
 import { PaymentMapper } from "../mapper/payment.mapper";

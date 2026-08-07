@@ -1,16 +1,16 @@
-import type { OrderId } from "@mercadonow/shared";
+import type { OrderId, PaymentId } from "@mercadonow/shared";
 
 import { Payment } from "../../domain/payment";
-import type { OrderPort } from "../ports/out/order-repository";
-import type { PaymentPort } from "../ports/out/payment-repository";
+import type { OrderPort } from "../ports/out/order.port";
+import type { PaymentPort } from "../ports/out/payment.port";
 import type { Money } from "../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
   OrderNotFoundError,
 } from "../errors/billing-application.errors";
-import type { PaymentGateway } from "../ports/out/payment-gateway";
-import type { PaymentIdGenerator } from "../ports/out/payment-id-generator";
-import type { TransactionManagerPort } from "../ports/out/transaction-manager";
+import type { PaymentGateway } from "./interfaces/payment-gateway";
+import type { IdGenerator } from "../ports/out/id-generator.port";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager.port";
 import type {
   CreatePaymentInput,
   CreatePaymentOutput,
@@ -21,7 +21,7 @@ export class CreatePayment {
     private readonly OrderPort: OrderPort,
     private readonly PaymentPort: PaymentPort,
     private readonly transactionManagerPort: TransactionManagerPort,
-    private readonly paymentIdGenerator: PaymentIdGenerator,
+    private readonly paymentIdGenerator: IdGenerator<PaymentId>,
     private readonly paymentGateway: PaymentGateway,
   ) {}
 

@@ -2,7 +2,7 @@ import type {
   AuthorizePaymentInput,
   AuthorizePaymentResult,
   PaymentGateway,
-} from "../../../../application/ports/out/payment-gateway";
+} from "../../../../application/use-cases/interfaces/payment-gateway";
 
 export class SandboxPaymentGateway implements PaymentGateway {
   authorize(input: AuthorizePaymentInput): Promise<AuthorizePaymentResult> {

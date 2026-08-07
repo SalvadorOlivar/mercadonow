@@ -1,17 +1,17 @@
-import { asId } from "@mercadonow/shared";
+import { asId, type PaymentId } from "@mercadonow/shared";
 
 import { Order } from "../../../domain/order";
 import { Payment } from "../../../domain/payment";
-import type { OrderPort } from "../../ports/out/order-repository";
-import type { PaymentPort } from "../../ports/out/payment-repository";
+import type { OrderPort } from "../../ports/out/order.port";
+import type { PaymentPort } from "../../ports/out/payment.port";
+import type { IdGenerator } from "../../ports/out/id-generator.port";
 import { Money } from "../../../domain/value-objects/money";
 import {
   ActivePaymentAlreadyExistsError,
   OrderNotFoundError,
 } from "../../errors/billing-application.errors";
-import type { PaymentGateway } from "../../ports/out/payment-gateway";
-import type { PaymentIdGenerator } from "../../ports/out/payment-id-generator";
-import type { TransactionManagerPort } from "../../ports/out/transaction-manager";
+import type { PaymentGateway } from "../interfaces/payment-gateway";
+import type { TransactionManagerPort } from "../../ports/out/transaction-manager.port";
 import { CreatePayment } from "../create-payment.use-case";
 
 const orderId = asId("0198f5ef-b5bd-7c86-a7b2-bc32c5c57888", "OrderId");
@@ -64,7 +64,7 @@ const setup = (options?: {
   const transactionManager: TransactionManagerPort = {
     run: jest.fn(async <T>(work: () => Promise<T>) => work()),
   };
-  const idGenerator: PaymentIdGenerator = { generate: () => paymentId };
+  const idGenerator: IdGenerator<PaymentId> = { generate: () => paymentId };
   const gateway: jest.Mocked<PaymentGateway> = {
     authorize: jest.fn().mockResolvedValue(
       options?.authorized === false

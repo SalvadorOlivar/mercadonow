@@ -1,8 +1,10 @@
+import type { OrderId } from "@mercadonow/shared";
+
 import { Order } from "../../domain/order";
-import type { OrderPort } from "../ports/out/order-repository";
+import type { OrderPort } from "../ports/out/order.port";
 import { Money } from "../../domain/value-objects/money";
-import type { OrderIdGenerator } from "../ports/out/order-id-generator";
-import type { TransactionManagerPort } from "../ports/out/transaction-manager";
+import type { IdGenerator } from "../ports/out/id-generator.port";
+import type { TransactionManagerPort } from "../ports/out/transaction-manager.port";
 import type {
   CreateOrderInput,
   CreateOrderOutput,
@@ -12,7 +14,7 @@ export class CreateOrder {
   constructor(
     private readonly OrderPort: OrderPort,
     private readonly transactionManagerPort: TransactionManagerPort,
-    private readonly orderIdGenerator: OrderIdGenerator,
+    private readonly orderIdGenerator: IdGenerator<OrderId>,
   ) {}
 
   execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
